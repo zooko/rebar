@@ -1,12 +1,15 @@
 use std::env::var;
 
 const ABSEIL_DEPENDENCIES: &[&str] = &[
+    "absl_absl_check",
+    "absl_absl_log",
     "absl_base",
     "absl_core_headers",
     "absl_fixed_array",
     "absl_flags",
     "absl_flat_hash_map",
     "absl_flat_hash_set",
+    "absl_hash",
     "absl_inlined_vector",
     "absl_optional",
     "absl_span",
