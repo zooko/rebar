@@ -11,6 +11,11 @@ fn main() {
         .define("PCRE2_CODE_UNIT_WIDTH", "8")
         .define("HAVE_STDLIB_H", "1")
         .define("HAVE_MEMMOVE", "1")
+        // NON-AUTOTOOLS-BUILD specifically says NOT to set this if we are
+        // setting things via `-D`, which... we are doing below. But if we
+        // don't set this, then the `PCRE2_EXPORT` macro is never defined and
+        // we get a bunch of errors.
+        .define("HAVE_CONFIG_H", "1")
         .define("HEAP_LIMIT", "20000000")
         .define("LINK_SIZE", "2")
         .define("MATCH_LIMIT", "10000000")
@@ -28,7 +33,10 @@ fn main() {
     }
     enable_jit(&target, &mut builder);
 
-    builder.include(upstream.join("src")).include(upstream.join("include"));
+    builder
+        .include(upstream.join("src"))
+        .include(upstream.join("include"))
+        .include(upstream.join("upstream/deps/sljit/sljit_src"));
     for result in std::fs::read_dir(upstream.join("src")).unwrap() {
         let dent = result.unwrap();
         let path = dent.path();

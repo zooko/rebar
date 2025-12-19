@@ -379,7 +379,7 @@
     args = ["Main.java"]
   [[engine.clean]]
     bin = "sh"
-    args = ["-c", "rm *.class"]
+    args = ["-c", "rm -f *.class"]
 
 # Javascript's regex engine from v8.
 #
