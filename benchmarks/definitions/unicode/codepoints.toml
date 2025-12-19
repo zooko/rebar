@@ -57,7 +57,9 @@ count = [
   # Very likely due to update to Unicode 15.1.
   { engine = '^re2$', count = 1250 },
   # Very likely due to update to Unicode 16.
-  { engine = '^(python/regex|rust/regex|pcre2.*)$', count = 1289 },
+  { engine = '^rust/regex|pcre2.*$', count = 1289 },
+  # Very likely due to update to Unicode 17.
+  { engine = '^python/regex$', count = 1333 },
   { engine = '.*', count = 1244 },
 ]
 engines = [
@@ -99,10 +101,11 @@ regex = '''(?x)(?:
 haystack = { path = "unicode/allcodepoints.txt" }
 unicode = true
 count = [
-  # Very likely due to update to Unicode 15.1 (a month old at time of writing).
+  # Very likely due to update to Unicode 15.1.
   { engine = '^re2$', count = 1250 },
-  # Very likely due to update to Unicode 16 (a month old at time of writing).
-  { engine = '^(python/regex|rust/regex)$', count = 1289 },
+  # Very likely due to update to Unicode 16.
+  { engine = '^rust/regex$', count = 1289 },
+  { engine = '^python/regex$', count = 1333 },
   # Maybe a different version of Unicode?
   { engine = 'pcre2/jit', count = 1203 },
   { engine = '.*', count = 1244 },
