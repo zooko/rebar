@@ -60,7 +60,7 @@ for name_with_slashes in $engines; do
   path="$dir/$name.csv"
   echo "=== $path ==="
   if [ -n "$curated" ]; then
-    rebar measure -f '^curated/' -e "$pat" | tee "$path"
+    rebar measure -f '^curated/' -e "$pat" --timeout 60s | tee "$path"
   else
     rebar measure -F '^test/' -e "$pat" | tee "$path"
   fi
