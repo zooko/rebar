@@ -17,6 +17,11 @@ count = 45_315
 engines = [
   'rust/regex',
   # 'rust/regexold', # timeout
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc"
 ]
 
 [[bench]]
@@ -28,6 +33,11 @@ haystack = { path = "opensubtitles/en-tiny.txt" }
 count = 87
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 
@@ -42,6 +52,11 @@ engines = [
   're2',
   'rust/regex',
   # 'rust/regexold', # timeout
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc"
 ]
 
 [[bench]]
@@ -59,5 +74,10 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]

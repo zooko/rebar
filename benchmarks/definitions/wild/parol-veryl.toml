@@ -17,6 +17,11 @@ haystack = { path = "wild/parol-veryl.vl" }
 count = 124_800
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 
@@ -29,6 +34,11 @@ haystack = { path = "wild/parol-veryl.vl" }
 count = 124_800
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 
@@ -40,6 +50,11 @@ haystack = { path = "wild/parol-veryl.vl" }
 count = 150_600
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/dense',
 ]
 
@@ -51,4 +66,9 @@ haystack = { path = "wild/parol-veryl.vl" }
 count = 124_800
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]

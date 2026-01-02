@@ -32,6 +32,11 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/lite',
   'rust/regexold',
 ]
@@ -48,6 +53,11 @@ engines = [
   'pcre2/jit',
   'python/regex',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 
@@ -67,6 +77,11 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/lite',
   'rust/regexold',
 ]
@@ -82,6 +97,11 @@ engines = [
   'pcre2/jit',
   'python/regex',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 
@@ -102,6 +122,11 @@ engines = [
   # Uses the 'reverse inner' optimization which looks for 'Holmes' and then
   # does a reverse search for '\b\w+\s+' to find the start position.
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/lite',
   'rust/regexold',
 ]
@@ -121,6 +146,11 @@ engines = [
   'pcre2/jit',
   'python/regex',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''

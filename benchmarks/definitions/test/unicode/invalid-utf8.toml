@@ -40,6 +40,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 `d/dmd/std-regex` does not support searching arbitrary bytes.
@@ -83,6 +88,11 @@ engines = [
   'perl',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 `d/dmd/std-regex` does not support searching arbitrary bytes.
@@ -122,6 +132,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 `d/dmd/std-regex` does not support searching arbitrary bytes.
@@ -177,6 +192,11 @@ engines = [
   'perl',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 `d/dmd/std-regex` does not support searching arbitrary bytes.
@@ -215,6 +235,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 `d/dmd/std-regex` does not support searching arbitrary bytes.

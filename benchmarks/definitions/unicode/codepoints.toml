@@ -20,6 +20,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   'rust/regex/lite',
 ]
@@ -40,6 +45,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   'rust/regex/lite',
 ]
@@ -68,6 +78,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''
@@ -112,6 +127,11 @@ count = [
 ]
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   # 're2', # does not support 'x' flag
   # 'go/regexp', # does not support 'x' flag
@@ -141,6 +161,11 @@ unicode = true
 count = 13
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   # 're2', # appears to crap out and reports 0 matches
   # 'go/regexp', # insufficient Unicode property support
@@ -177,5 +202,10 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]

@@ -24,6 +24,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/ast',
   'rust/regex/hir',
   'rust/regex/nfa',
@@ -42,6 +47,11 @@ unicode = true
 count = 874
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   're2',
   'go/regexp',
@@ -69,6 +79,11 @@ engines = [
   'python/regex',
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''
@@ -103,6 +118,11 @@ unicode = true
 count = 874
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   're2',
   'go/regexp',

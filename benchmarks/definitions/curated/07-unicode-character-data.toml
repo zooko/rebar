@@ -44,6 +44,11 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/lite',
   'rust/regexold',
 ]
@@ -70,6 +75,11 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/lite',
   'rust/regexold',
 ]

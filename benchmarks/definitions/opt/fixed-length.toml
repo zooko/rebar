@@ -30,6 +30,11 @@ engines = [
 	'rust/regex',
   # Does not do it because it is a lower level regex engine. Included as a
   # point of comparison.
+	"rust/regex-mimalloc",
+	"rust/regex-jemalloc",
+	"rust/regex-smalloc",
+	"rust/regex-rpmalloc",
+	"rust/regex-snmalloc",
 	'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',
@@ -56,6 +61,11 @@ count = 0
 engines = [
 	'rust/regex',
   # Does not do it. Included as a point of comparison.
+	"rust/regex-mimalloc",
+	"rust/regex-jemalloc",
+	"rust/regex-smalloc",
+	"rust/regex-rpmalloc",
+	"rust/regex-snmalloc",
 	'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',
@@ -83,6 +93,11 @@ count = 0
 engines = [
 	'rust/regex',
   # Does not do it. Included as a point of comparison.
+	"rust/regex-mimalloc",
+	"rust/regex-jemalloc",
+	"rust/regex-smalloc",
+	"rust/regex-rpmalloc",
+	"rust/regex-snmalloc",
 	'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',
@@ -106,6 +121,11 @@ count = 0
 engines = [
 	'rust/regex',
   # Does not do it. Included as a point of comparison.
+	"rust/regex-mimalloc",
+	"rust/regex-jemalloc",
+	"rust/regex-smalloc",
+	"rust/regex-rpmalloc",
+	"rust/regex-snmalloc",
 	'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',
@@ -123,6 +143,11 @@ count = 0
 engines = [
   'rust/regex',
   # Does not do it. Included as a point of comparison.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',
@@ -142,6 +167,11 @@ count = 0
 engines = [
   'rust/regex',
   # Does not do it. Included as a point of comparison.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',
@@ -162,6 +192,11 @@ count = 0
 engines = [
   'rust/regex',
   # Does not do it. Included as a point of comparison.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/hybrid',
   # Does not do it.
   'rust/regexold',

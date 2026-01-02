@@ -18,6 +18,11 @@ count = 4073
 engines = [
   'rust/regex',
   # Does not do it. Included as a point of comparison.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/hybrid',
   'rust/regexold',
   # Does not do it.
@@ -43,6 +48,11 @@ engines = [
   # This should run at some reasonable speed, ideally in a similar ballpark
   # as hyrbid.
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/hybrid',
   'rust/regexold',
   're2',

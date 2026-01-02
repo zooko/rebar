@@ -91,6 +91,11 @@ haystack = { contents = "01245689ABCEFGIJKMNOQRSUVWYZabcefgijkmnoqrsuvwyz", repe
 count = 0
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   'rust/regex/pikevm',
 ]
@@ -140,6 +145,11 @@ haystack = { contents = "01245689ABCEFGIJKMNOQRSUVWYZabcefgijkmnoqrsuvwyz", repe
 count = 0
 engines = [
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   'rust/regex/pikevm',
 ]

@@ -17,6 +17,11 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
   # We include this as a reference point to demonstrate the overhead of the
   # regex engine versus just calling one of the regex crate's internal regex
@@ -42,6 +47,11 @@ engines = [
   're2',
   'regress',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''
@@ -59,6 +69,11 @@ engines = [
   'pcre2/jit',
   'python/regex',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''

@@ -27,6 +27,11 @@ count = 1
 engines = [
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/ast',
   'rust/regex/hir',
   'rust/regex/lite',
@@ -49,6 +54,11 @@ count = 1
 engines = [
   're2',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/ast',
   'rust/regex/hir',
   'rust/regex/lite',

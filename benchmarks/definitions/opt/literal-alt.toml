@@ -31,6 +31,11 @@ engines = [
   # PikeVM). This is the main point of comparison here, as the same regex
   # engine on what is essentially the same regex in the 'pattern-per-word'
   # benchmark below executes very very slowly.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/pikevm',
   # Seems to do okay. Probably due to memory/budget differences between it and
   # RE2's lazy DFA.
@@ -57,5 +62,10 @@ engines = [
   'rust/regex',
   # Perf is generally quite bad because it spends all of its time shuffling
   # states around for one big alternation.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/pikevm',
 ]

@@ -15,6 +15,11 @@ engines = [
   # Does a reverse anchored search.
   'rust/regex',
   # Does not.
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regex/hybrid',
   # Does it!
   'rust/regexold',

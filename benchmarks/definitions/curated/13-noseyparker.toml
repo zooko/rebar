@@ -62,6 +62,11 @@ engines = [
   'hyperscan',
   'pcre2/jit',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''
@@ -93,6 +98,11 @@ count = [
 engines = [
   'hyperscan',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 Only `hyperscan` and `rust/regex` are included because they are the only
@@ -111,6 +121,11 @@ engines = [
   'hyperscan',
   'pcre2/jit',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
   'rust/regexold',
 ]
 analysis = '''
@@ -126,6 +141,11 @@ count = 1
 engines = [
   'hyperscan',
   'rust/regex',
+  "rust/regex-mimalloc",
+  "rust/regex-jemalloc",
+  "rust/regex-smalloc",
+  "rust/regex-rpmalloc",
+  "rust/regex-snmalloc",
 ]
 analysis = '''
 We only include the engines that are measured in the `multi` benchmark.
