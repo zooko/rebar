@@ -142,7 +142,7 @@ dependencies = [
  "regex",
  "regex-automata",
  "regexredux",
- "smalloc",
+ "smmalloc",
  "timer",
 ]
 

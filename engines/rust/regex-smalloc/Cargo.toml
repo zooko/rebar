@@ -8,7 +8,7 @@ name = "main"
 path = "main.rs"
 
 [dependencies]
-smalloc = { version = "7.4", path = "../../../../smalloc/7.4/smalloc" }
+smmalloc = { version = "7.4", repo = "https://github.com/zooko/smalloc" }
 anyhow = "1.0.69"
 bstr = { version = "1.2.0", default-features = false, features = ["std"] }
 # Using an older version here because I am really not a fan of the dependency
