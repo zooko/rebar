@@ -10,25 +10,38 @@ CPUTYPE="${CPUTYPE//[^[:alnum:]]/}"
 
 OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
 
-RESF=rebar.bench-allocators.result.${CPUTYPE}.${OSTYPESTR}.txt
+ARGS=$*
+ARGSSTR="${ARGS//[^[:alnum:]]/}"
 
-echo "# Saving result into a file named \"${RESF}\" ..."
+BNAME="rebar.bench-allocators"
+FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
+TMPF="tmp/${FNAME}"
+RESF="${FNAME}"
 
-rm -f $RESF
+echo "# Saving result into a tmp file (in ./tmp) which will be moved to \"${RESF}\" when complete..."
 
-echo "# git log -1 | head -1" 2>&1 | tee -a $RESF
-git log -1 | head -1 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
+rm -f $TMPF
+mkdir -p tmp
 
-echo CPU type: 2>&1 | tee -a $RESF
-echo $CPUTYPE 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
+echo "# git log -1 | head -1" 2>&1 | tee -a $TMPF
+git log -1 | head -1 2>&1 | tee -a $TMPF
+echo 2>&1 | tee -a $TMPF
 
-echo OS type: 2>&1 | tee -a $RESF
-echo $OSTYPE 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
+echo "[ -z \"\$(git status --porcelain)\" ] && echo \"Clean\" || echo \"Uncommitted changes\"" 2>&1 | tee -a $TMPF
+[ -z "$(git status --porcelain)" ] && echo "Clean" || echo "Uncommitted changes" 2>&1 | tee -a $TMPF
+echo 2>&1 | tee -a $TMPF
+
+echo CPU type: 2>&1 | tee -a $TMPF
+echo $CPUTYPE 2>&1 | tee -a $TMPF
+echo 2>&1 | tee -a $TMPF
+
+echo OS type: 2>&1 | tee -a $TMPF
+echo $OSTYPE 2>&1 | tee -a $TMPF
+echo 2>&1 | tee -a $TMPF
 
 cargo build --locked --release
 ./target/release/rebar build -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$'
-./target/release/rebar measure -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$' -f curated | tee res.csv
-./target/release/rebar rank res.csv 2>&1 | tee -a $RESF
+./target/release/rebar measure -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$' -f curated ${ARGS} | tee tmp/res.csv
+./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $TMPF
+
+mv -f "${TMPF}" "${RESF}"
