@@ -1,12 +1,30 @@
-echo CPU type:
+# CPU type on linuxy
+CPUTYPE=`grep "model name" /proc/cpuinfo 2>/dev/null | uniq | cut -d':' -f2-`
 
-# print out CPU type on macos
-sysctl -n machdep.cpu.brand_string 2>/dev/null
+if [ "x${CPUTYPE}" = "x" ] ; then
+    # CPU type on macos
+    CPUTYPE=`sysctl -n machdep.cpu.brand_string 2>/dev/null`
+fi
 
-# print out CPU type on linux
-grep "model name" /proc/cpuinfo 2>/dev/null | uniq
+CPUTYPE="${CPUTYPE//[^[:alnum:]]/}"
+
+OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
+
+RESF=rebar.bench-allocators.result.${CPUTYPE}.${OSTYPESTR}.txt
+
+echo "# Saving result into a file named \"${RESF}\" ..."
+
+rm -f $RESF
+
+echo CPU type: 2>&1 | tee -a $RESF
+echo $CPUTYPE 2>&1 | tee -a $RESF
+echo 2>&1 | tee -a $RESF
+
+echo OS type: 2>&1 | tee -a $RESF
+echo $OSTYPE 2>&1 | tee -a $RESF
+echo 2>&1 | tee -a $RESF
 
 cargo build --release
 ./target/release/rebar build -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$'
 ./target/release/rebar measure -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$' -f curated | tee res.csv
-./target/release/rebar rank res.csv
+./target/release/rebar rank res.csv 2>&1 | tee -a $RESF
