@@ -27,8 +27,8 @@ echo "# git log -1 | head -1" 2>&1 | tee -a $TMPF
 git log -1 | head -1 2>&1 | tee -a $TMPF
 echo 2>&1 | tee -a $TMPF
 
-echo "[ -z \"\$(git status --porcelain)\" ] && echo \"Clean\" || echo \"Uncommitted changes\"" 2>&1 | tee -a $TMPF
-[ -z "$(git status --porcelain)" ] && echo "Clean" || echo "Uncommitted changes" 2>&1 | tee -a $TMPF
+echo "( [ -z \"\$(git status --porcelain)\" ] && echo \"Clean\" || echo \"Uncommitted changes\" )" 2>&1 | tee -a $TMPF
+( [ -z "$(git status --porcelain)" ] && echo "Clean" || echo "Uncommitted changes" ) 2>&1 | tee -a $TMPF
 echo 2>&1 | tee -a $TMPF
 
 echo CPU type: 2>&1 | tee -a $TMPF
