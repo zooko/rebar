@@ -39,9 +39,18 @@ echo OS type: 2>&1 | tee -a $TMPF
 echo $OSTYPE 2>&1 | tee -a $TMPF
 echo 2>&1 | tee -a $TMPF
 
+if [ "x${OSTYPE}" = "xmsys" ]; then
+	# no jemalloc on windows
+	ALLOCATORS="(mi|sp|sn|s)malloc"
+else
+	ALLOCATORS="(je|mi|sp|sn|s)malloc"
+fi
+
 cargo build --locked --release
-./target/release/rebar build -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$'
-./target/release/rebar measure -e '^rust/regex(-(s|mi|sn|je|rp)malloc)?$' -f curated ${ARGS} | tee tmp/res.csv
+./target/release/rebar build -e '^rust/regex(-${ALLOCATORS})?$'
+./target/release/rebar measure -e '^rust/regex(-${ALLOCATORS})?$' -f curated ${ARGS} | tee tmp/res.csv
 ./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $TMPF
 
 mv -f "${TMPF}" "${RESF}"
+
+echo "# Results are in \"${RESF}\" ."
