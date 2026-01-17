@@ -40,9 +40,9 @@ echo 2>&1 | tee -a $RESF
 
 if [ "x${OSTYPE}" = "xmsys" ]; then
 	# no jemalloc or snmalloc on windows
-	ALLOCATORS="(mi|sp|s)malloc"
+	ALLOCATORS="(mi|rp|s)malloc"
 else
-	ALLOCATORS="(je|mi|sp|sn|s)malloc"
+	ALLOCATORS="(je|sn|mi|rp|s)malloc"
 fi
 
 cargo build --locked --release &&
