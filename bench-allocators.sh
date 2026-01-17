@@ -45,9 +45,9 @@ else
 	ALLOCATORS="(je|mi|sp|sn|s)malloc"
 fi
 
-cargo build --locked --release
-./target/release/rebar build -e "^rust/regex(-${ALLOCATORS})?$"
-./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -f curated ${ARGS} | tee tmp/res.csv
-./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $RESF
+cargo build --locked --release &&
+./target/release/rebar build -e "^rust/regex(-${ALLOCATORS})?$" &&
+./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -f curated ${ARGS} | tee tmp/res.csv &&
+./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $RESF &&
 
 echo "# Results are in \"${RESF}\" ."
