@@ -13,7 +13,7 @@ OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
 ARGS=$*
 ARGSSTR="${ARGS//[^[:alnum:]]/}"
 
-BNAME="rebar.bench-allocators"
+BNAME="rebar"
 FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
 RESF="tmp/${FNAME}"
 
