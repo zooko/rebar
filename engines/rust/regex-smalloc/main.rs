@@ -1,6 +1,6 @@
 use std::io::Write;
 
-use smmalloc::Smalloc;
+use smalloc::Smalloc;
 #[global_allocator]
 static ALLOC: Smalloc = Smalloc::new();
 
