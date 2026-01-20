@@ -2,75 +2,59 @@
 # Thanks to Claude (Opus 4.5 & Sonnet 4.5) for writing this to my specifications.
 
 import sys
-import re
+import csv
 import argparse
+import math
+from collections import defaultdict
 
 parser = argparse.ArgumentParser()
-parser.add_argument('result_file', help='Result file from rebar bench-allocators.sh')
+parser.add_argument('csv_file', help='CSV file from rebar measure output')
 parser.add_argument('--graph', help='Output SVG graph to this file')
 args = parser.parse_args()
 
-# Hardcoded allocator ordering (excluding 'default' which is always first and 'smalloc' which is always last)
+# Hardcoded allocator ordering
 ALLOCATOR_ORDER = ['jemalloc', 'snmalloc', 'mimalloc', 'rpmalloc']
 
-def parse_rebar_result(filename):
-    """Parse rebar bench-allocators.sh output and return metadata + engine data."""
-    metadata = {}
-    engines = []
+def parse_time(time_str):
+    """Parse a time string like '24.67us' or '1.42ms' and return nanoseconds."""
+    if not time_str:
+        return None
 
-    with open(filename, 'r', encoding='utf-8') as f:
-        lines = f.readlines()
+    # Handle values that already look like floats
+    try:
+        return float(time_str)
+    except ValueError:
+        pass
 
-    # Parse metadata
-    for i, line in enumerate(lines):
-        line = line.strip()
-        if line.startswith('commit '):
-            metadata['commit'] = line.split()[1]
-        elif line in ['Clean', 'Uncommitted changes']:
-            metadata['git_status'] = line
-        elif i > 0 and lines[i-1].strip() == 'CPU type:':
-            metadata['cpu'] = line
-        elif i > 0 and lines[i-1].strip() == 'OS type:':
-            metadata['os'] = line
+    # Parse formatted times
+    import re
+    match = re.match(r'([\d.]+)(ns|us|ms|s)', time_str)
+    if not match:
+        raise ValueError(f"Cannot parse time: {time_str}")
 
-    # Find the table section
-    table_started = False
-    for line in lines:
-        line = line.strip()
+    value = float(match.group(1))
+    unit = match.group(2)
 
-        # Skip header lines
-        if line.startswith('Engine') or line.startswith('---'):
-            table_started = True
-            continue
+    multipliers = {
+        'ns': 1,
+        'us': 1_000,
+        'ms': 1_000_000,
+        's': 1_000_000_000,
+    }
 
-        if table_started and line:
-            # Parse: "rust/regex-snmalloc 1.12.2 1.01 52"
-            parts = line.split()
-            if len(parts) >= 3:
-                engine_name = parts[0]
-                version = parts[1]
-                geo_mean = float(parts[2])
+    return value * multipliers[unit]
 
-                # Extract allocator name from engine name (e.g., "rust/regex-snmalloc" -> "snmalloc")
-                allocator = 'default'
-                if '-' in engine_name:
-                    allocator = engine_name.split('-')[-1]
-                elif 'rust/regex' == engine_name:
-                    allocator = 'default'
+def get_allocator_name(engine_name):
+    """Extract allocator name from engine name."""
+    if engine_name == 'rust/regex':
+        return 'default'
+    elif '-' in engine_name:
+        return engine_name.split('-')[-1]
+    return 'unknown'
 
-                engines.append({
-                    'name': engine_name,
-                    'allocator': allocator,
-                    'version': version,
-                    'geo_mean': geo_mean
-                })
-
-    return metadata, engines
-
-def sort_engines(engines):
-    """Sort engines: default first, then ALLOCATOR_ORDER, then unknown, then smalloc last."""
-    def sort_key(engine):
-        name = engine['allocator']
+def sort_allocators(allocators):
+    """Sort allocators: default first, then ALLOCATOR_ORDER, then unknown, then smalloc last."""
+    def sort_key(name):
         if name == 'default':
             return (0, 0, name)
         elif name == 'smalloc':
@@ -78,35 +62,40 @@ def sort_engines(engines):
         elif name in ALLOCATOR_ORDER:
             return (1, ALLOCATOR_ORDER.index(name), name)
         else:
-            # Unknown allocators go between known and smalloc
             return (2, 0, name)
 
-    return sorted(engines, key=sort_key)
+    return sorted(allocators, key=sort_key)
 
-def generate_svg_graph(engines, metadata, output_file):
+def generate_svg_graph(allocator_stats, sorted_allocators, output_file):
     """Generate an SVG bar chart comparing allocator performance."""
 
     # Graph dimensions
     width = 800
     height = 500
     margin_top = 60
-    margin_bottom = 120  # Space for metadata below
+    margin_bottom = 100
     margin_left = 80
     margin_right = 40
 
     chart_width = width - margin_left - margin_right
     chart_height = height - margin_top - margin_bottom
 
-    # Calculate percentages (baseline = 100%, others relative to baseline)
-    baseline_geo_mean = engines[0]['geo_mean']
-    percentages = [(e['geo_mean'] / baseline_geo_mean * 100) for e in engines]
+    # Calculate percentages (baseline = 100%, others relative)
+    percentages = []
+    for allocator in sorted_allocators:
+        if allocator == 'default':
+            percentages.append(100.0)
+        else:
+            # Convert ratio to percentage: 1.03 -> 103%
+            pct = allocator_stats[allocator]['ratio'] * 100
+            percentages.append(pct)
 
     # Find max for scaling
     max_pct = max(percentages)
-    scale_max = max_pct * 1.1  # 10% padding at top
+    scale_max = max(max_pct * 1.1, 120)  # At least 120% for scale
 
     # Calculate bar properties
-    bar_width = chart_width / len(engines)
+    bar_width = chart_width / len(sorted_allocators)
     padding = bar_width * 0.2
     actual_bar_width = bar_width - padding
 
@@ -115,72 +104,67 @@ def generate_svg_graph(engines, metadata, output_file):
 
     svg_parts = []
     svg_parts.append(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}">
-    <style>
-        .bar {{ stroke: none; }}
-        .axis {{ stroke: #333; stroke-width: 1; }}
-        .grid {{ stroke: #ddd; stroke-width: 0.5; }}
-        .label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 12px; fill: #333; }}
-        .value {{ font-family: monospace; font-size: 11px; fill: #999; }}
-        .title {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 16px; font-weight: 600; fill: #333; }}
-        .metadata {{ font-family: monospace; font-size: 10px; fill: #666; }}
-    </style>
+  <style>
+    .bar {{ stroke: none; }}
+    .axis {{ stroke: #333; stroke-width: 1; }}
+    .grid {{ stroke: #ddd; stroke-width: 0.5; }}
+    .label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 12px; fill: #333; }}
+    .value {{ font-family: monospace; font-size: 11px; fill: #999; }}
+    .title {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 16px; font-weight: 600; fill: #333; }}
+    .metadata {{ font-family: monospace; font-size: 10px; fill: #666; }}
+  </style>
 ''')
 
-    # Title - UPDATED to clarify "higher is better"
-    svg_parts.append(f'    <text x="{width/2}" y="30" class="title" text-anchor="middle">Performance of rust/regex with different allocators—time (lower is better)</text>\n')
+    # Title
+    svg_parts.append(f'  <text x="{width/2}" y="30" class="title" text-anchor="middle">rust/regex Performance with Different Allocators (lower is better)</text>\n')
 
     # Y-axis
-    svg_parts.append(f'    <line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + chart_height}" class="axis"/>\n')
-    svg_parts.append(f'    <line x1="{margin_left}" y1="{margin_top + chart_height}" x2="{margin_left + chart_width}" y2="{margin_top + chart_height}" class="axis"/>\n')
+    svg_parts.append(f'  <line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + chart_height}" class="axis"/>\n')
+    svg_parts.append(f'  <line x1="{margin_left}" y1="{margin_top + chart_height}" x2="{margin_left + chart_width}" y2="{margin_top + chart_height}" class="axis"/>\n')
 
-    # Grid lines and labels (every 20% from 0% to 120%)
+    # Grid lines and labels (every 20% from 0% to 120%+)
     for pct in [0, 20, 40, 60, 80, 100, 120]:
         if pct > scale_max:
             break
         y = margin_top + chart_height * (1 - pct/scale_max)
-        svg_parts.append(f'    <line x1="{margin_left}" y1="{y}" x2="{margin_left + chart_width}" y2="{y}" class="grid"/>\n')
-        svg_parts.append(f'    <text x="{margin_left - 10}" y="{y + 4}" class="label" text-anchor="end">{pct:.0f}%</text>\n')
+        svg_parts.append(f'  <line x1="{margin_left}" y1="{y}" x2="{margin_left + chart_width}" y2="{y}" class="grid"/>\n')
+        svg_parts.append(f'  <text x="{margin_left - 10}" y="{y + 4}" class="label" text-anchor="end">{pct:.0f}%</text>\n')
 
     # Bars and labels
-    for i, (engine, pct) in enumerate(zip(engines, percentages)):
+    for i, allocator in enumerate(sorted_allocators):
+        pct = percentages[i]
         x = margin_left + i * bar_width + padding/2
         bar_height = (pct / scale_max) * chart_height
         y = margin_top + chart_height - bar_height
+
         color = colors[i % len(colors)]
 
         # Bar
-        svg_parts.append(f'    <rect x="{x}" y="{y}" width="{actual_bar_width}" height="{bar_height}" class="bar" fill="{color}"/>\n')
+        svg_parts.append(f'  <rect x="{x}" y="{y}" width="{actual_bar_width}" height="{bar_height}" class="bar" fill="{color}"/>\n')
 
-        # Value above bar (delta percentage rounded to whole number)
-        if i == 0:
+        # Value above bar
+        if allocator == 'default':
             label = "100% (baseline)"
         else:
             delta = round(pct - 100)
-            label = f"{pct:.0f}%"
-        svg_parts.append(f'    <text x="{x + actual_bar_width/2}" y="{y - 5}" class="value" text-anchor="middle">{label}</text>\n')
+            label = f"{delta:+d}%"
+
+        svg_parts.append(f'  <text x="{x + actual_bar_width/2}" y="{y - 5}" class="value" text-anchor="middle">{label}</text>\n')
 
         # Allocator name below
         text_y = margin_top + chart_height + 20
-        allocator_name = engine['allocator']
-        svg_parts.append(f'    <text x="{x + actual_bar_width/2}" y="{text_y}" class="label" text-anchor="middle">{allocator_name}</text>\n')
+        svg_parts.append(f'  <text x="{x + actual_bar_width/2}" y="{text_y}" class="label" text-anchor="middle">{allocator}</text>\n')
 
     # Metadata below the graph
     metadata_y = margin_top + chart_height + 50
-    metadata_lines = []
-
-    metadata_lines.append("Source: https://github.com/zooko/rebar")
-    if metadata.get('commit'):
-        metadata_lines.append(f"Commit: {metadata['commit'][:12]}")
-    if metadata.get('git_status'):
-        metadata_lines.append(f"Git status: {metadata['git_status']}")
-    if metadata.get('cpu'):
-        metadata_lines.append(f"CPU: {metadata['cpu']}")
-    if metadata.get('os'):
-        metadata_lines.append(f"OS: {metadata['os']}")
+    metadata_lines = [
+        "Source: https://github.com/zooko/rebar",
+        f"Based on {sum(allocator_stats[a]['test_count'] for a in sorted_allocators if a != 'default') // (len(sorted_allocators) - 1)} curated benchmarks"
+    ]
 
     for i, line in enumerate(metadata_lines):
         y = metadata_y + i * 15
-        svg_parts.append(f'    <text x="{width/2}" y="{y}" class="metadata" text-anchor="middle">{line}</text>\n')
+        svg_parts.append(f'  <text x="{width/2}" y="{y}" class="metadata" text-anchor="middle">{line}</text>\n')
 
     svg_parts.append('</svg>')
 
@@ -189,38 +173,87 @@ def generate_svg_graph(engines, metadata, output_file):
 
     print(f"\n📊 Graph saved to: {output_file}")
 
-# Parse the result file
-metadata, engines = parse_rebar_result(args.result_file)
+# Parse CSV file
+test_data = defaultdict(dict)  # test_name -> {allocator -> median_ns}
 
-# Sort engines by allocator order
-engines = sort_engines(engines)
+with open(args.csv_file, 'r', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    for row in reader:
+        test_name = row['name']
+        engine = row['engine']
+        allocator = get_allocator_name(engine)
+        median_ns = parse_time(row['median'])
 
-# Extract column names
-col_names = [e['allocator'] for e in engines]
-geo_means = [e['geo_mean'] for e in engines]
+        if median_ns is not None:
+            test_data[test_name][allocator] = median_ns
 
-assert len(geo_means) > 0, (engines, args.result_file)
+# Calculate normalized time differences for each allocator
+allocator_deltas = defaultdict(list)
 
-# Calculate percentages
-baseline_geo_mean = geo_means[0]
-percentages = [(g / baseline_geo_mean * 100) for g in geo_means]
+for test_name, results in test_data.items():
+    if 'default' not in results:
+        continue
 
-# Print table
-max_name_len = max(len(e['name']) for e in engines)
-max_alloc_len = max(len(e['allocator']) for e in engines)
+    baseline_time = results['default']
 
-print(f"{'Allocator':<{max_alloc_len}} {'Engine':<{max_name_len}} {'Geo Mean':>10} {'Relative':>10}")
-print("-" * (max_alloc_len + max_name_len + 26))
+    for allocator, time in results.items():
+        if allocator == 'default':
+            continue
 
-for i, engine in enumerate(engines):
-    if i == 0:
-        relative = "baseline"
-    else:
-        delta = round(percentages[i] - 100)
-        relative = f"{delta:+d}%"
+        # Calculate percentage difference
+        delta = (time - baseline_time) / baseline_time
 
-    print(f"{engine['allocator']:<{max_alloc_len}} {engine['name']:<{max_name_len}} {engine['geo_mean']:>10.2f} {relative:>10}")
+        allocator_deltas[allocator].append(delta)
+
+# Calculate geometric mean of deltas for each allocator
+allocator_stats = {}
+
+for allocator, deltas in allocator_deltas.items():
+    if not deltas:
+        continue
+
+    # Geometric mean of (1 + delta) values, then subtract 1
+    product = 1.0
+    for delta in deltas:
+        product *= (1.0 + delta)
+
+    geo_mean_ratio = product ** (1.0 / len(deltas))
+    geo_mean_delta = geo_mean_ratio - 1.0
+
+    allocator_stats[allocator] = {
+        'delta': geo_mean_delta,
+        'ratio': geo_mean_ratio,
+        'test_count': len(deltas)
+    }
+
+# Add default (baseline) stats
+allocator_stats['default'] = {
+    'delta': 0.0,
+    'ratio': 1.0,
+    'test_count': len(test_data)
+}
+
+# Sort allocators
+sorted_allocators = ['default'] + sort_allocators([a for a in allocator_stats.keys() if a != 'default'])
+
+# Print results
+print(f"{'Allocator':<12} {'Geo Mean Ratio':>16} {'Geo Mean Delta':>16} {'Test Count':>12}")
+print("-" * 60)
+
+for allocator in sorted_allocators:
+    stats = allocator_stats[allocator]
+    ratio = stats['ratio']
+    delta = stats['delta'] * 100  # Convert to percentage
+    count = stats['test_count']
+
+    print(f"{allocator:<12} {ratio:>16.4f} {delta:>+15.2f}% {count:>12}")
+
+print()
+print("Interpretation:")
+print("- Geo Mean Ratio: If baseline takes 1.0s, candidate takes this many seconds (geometric mean)")
+print("- Geo Mean Delta: Percentage difference from baseline (geometric mean)")
+print("- Lower ratios/deltas are better (less overhead)")
 
 # Generate graph if requested
 if args.graph:
-    generate_svg_graph(engines, metadata, args.graph)
+    generate_svg_graph(allocator_stats, sorted_allocators, args.graph)

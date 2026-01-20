@@ -46,14 +46,16 @@ else
     ALLOCATORS="(je|mi|rp|sn|s)malloc"
 fi
 
+CSVFILE=tmp/res.csv
+
 cargo build --locked --release
 ./target/release/rebar build -e "^rust/regex(-${ALLOCATORS})?$"
 ./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -f curated ${ARGS} | tee tmp/res.csv
-./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $RESF
+./target/release/rebar rank $CSVFILE 2>&1 | tee -a $RESF
 
 # Generate graph - note: no metadata args needed!
 GRAPHF="${RESF%.txt}.svg"
-./critcmp.py "$RESF" --graph "$GRAPHF"
+./critcmp.py "$CSVFILE" --graph "$GRAPHF"
 
 echo "# Results are in \"${RESF}\" ."
 echo "# Graph is in \"${GRAPHF}\" ."
