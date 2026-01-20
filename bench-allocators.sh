@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # CPU type on linuxy
 CPUTYPE=`grep "model name" /proc/cpuinfo 2>/dev/null | uniq | cut -d':' -f2-`
 
@@ -25,8 +27,7 @@ mkdir -p tmp
 echo "# git log -1 | head -1" 2>&1 | tee -a $RESF
 git log -1 | head -1 2>&1 | tee -a $RESF
 echo 2>&1 | tee -a $RESF
-
-echo "( [ -z \"\$(git status --porcelain)\" ] && echo \"Clean\" || echo \"Uncommitted changes\" )" 2>&1 | tee -a $RESF
+echo "( [ -z \"$(git status --porcelain)\" ] && echo \"Clean\" || echo \"Uncommitted changes\" )" 2>&1 | tee -a $RESF
 ( [ -z "$(git status --porcelain)" ] && echo "Clean" || echo "Uncommitted changes" ) 2>&1 | tee -a $RESF
 echo 2>&1 | tee -a $RESF
 
@@ -39,15 +40,20 @@ echo $OSTYPE 2>&1 | tee -a $RESF
 echo 2>&1 | tee -a $RESF
 
 if [ "x${OSTYPE}" = "xmsys" ]; then
-	# no jemalloc or snmalloc on windows
-	ALLOCATORS="(mi|rp|s)malloc"
+    # no jemalloc on windows
+    ALLOCATORS="(mi|rp|sn|s)malloc"
 else
-	ALLOCATORS="(je|sn|mi|rp|s)malloc"
+    ALLOCATORS="(je|mi|rp|sn|s)malloc"
 fi
 
-cargo build --locked --release &&
-./target/release/rebar build -e "^rust/regex(-${ALLOCATORS})?$" &&
-./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -f curated ${ARGS} | tee tmp/res.csv &&
-./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $RESF &&
+cargo build --locked --release
+./target/release/rebar build -e "^rust/regex(-${ALLOCATORS})?$"
+./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -f curated ${ARGS} | tee tmp/res.csv
+./target/release/rebar rank tmp/res.csv 2>&1 | tee -a $RESF
+
+# Generate graph - note: no metadata args needed!
+GRAPHF="${RESF%.txt}.svg"
+./critcmp.py "$RESF" --graph "$GRAPHF"
 
 echo "# Results are in \"${RESF}\" ."
+echo "# Graph is in \"${GRAPHF}\" ."

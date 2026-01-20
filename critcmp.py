@@ -115,42 +115,41 @@ def generate_svg_graph(engines, metadata, output_file):
 
     svg_parts = []
     svg_parts.append(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}">
-  <style>
-    .bar {{ stroke: none; }}
-    .axis {{ stroke: #333; stroke-width: 1; }}
-    .grid {{ stroke: #ddd; stroke-width: 0.5; }}
-    .label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 12px; fill: #333; }}
-    .value {{ font-family: monospace; font-size: 11px; fill: #999; }}
-    .title {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 16px; font-weight: 600; fill: #333; }}
-    .metadata {{ font-family: monospace; font-size: 10px; fill: #666; }}
-  </style>
+    <style>
+        .bar {{ stroke: none; }}
+        .axis {{ stroke: #333; stroke-width: 1; }}
+        .grid {{ stroke: #ddd; stroke-width: 0.5; }}
+        .label {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 12px; fill: #333; }}
+        .value {{ font-family: monospace; font-size: 11px; fill: #999; }}
+        .title {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif; font-size: 16px; font-weight: 600; fill: #333; }}
+        .metadata {{ font-family: monospace; font-size: 10px; fill: #666; }}
+    </style>
 ''')
 
-    # Title
-    svg_parts.append(f'  <text x="{width/2}" y="30" class="title" text-anchor="middle">Performance of rust/regex with different allocators—time (lower is better)</text>\n')
+    # Title - UPDATED to clarify "higher is better"
+    svg_parts.append(f'    <text x="{width/2}" y="30" class="title" text-anchor="middle">Performance of rust/regex with different allocators—time (lower is better)</text>\n')
 
     # Y-axis
-    svg_parts.append(f'  <line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + chart_height}" class="axis"/>\n')
-    svg_parts.append(f'  <line x1="{margin_left}" y1="{margin_top + chart_height}" x2="{margin_left + chart_width}" y2="{margin_top + chart_height}" class="axis"/>\n')
+    svg_parts.append(f'    <line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + chart_height}" class="axis"/>\n')
+    svg_parts.append(f'    <line x1="{margin_left}" y1="{margin_top + chart_height}" x2="{margin_left + chart_width}" y2="{margin_top + chart_height}" class="axis"/>\n')
 
     # Grid lines and labels (every 20% from 0% to 120%)
     for pct in [0, 20, 40, 60, 80, 100, 120]:
         if pct > scale_max:
             break
         y = margin_top + chart_height * (1 - pct/scale_max)
-        svg_parts.append(f'  <line x1="{margin_left}" y1="{y}" x2="{margin_left + chart_width}" y2="{y}" class="grid"/>\n')
-        svg_parts.append(f'  <text x="{margin_left - 10}" y="{y + 4}" class="label" text-anchor="end">{pct:.0f}%</text>\n')
+        svg_parts.append(f'    <line x1="{margin_left}" y1="{y}" x2="{margin_left + chart_width}" y2="{y}" class="grid"/>\n')
+        svg_parts.append(f'    <text x="{margin_left - 10}" y="{y + 4}" class="label" text-anchor="end">{pct:.0f}%</text>\n')
 
     # Bars and labels
     for i, (engine, pct) in enumerate(zip(engines, percentages)):
         x = margin_left + i * bar_width + padding/2
         bar_height = (pct / scale_max) * chart_height
         y = margin_top + chart_height - bar_height
-
         color = colors[i % len(colors)]
 
         # Bar
-        svg_parts.append(f'  <rect x="{x}" y="{y}" width="{actual_bar_width}" height="{bar_height}" class="bar" fill="{color}"/>\n')
+        svg_parts.append(f'    <rect x="{x}" y="{y}" width="{actual_bar_width}" height="{bar_height}" class="bar" fill="{color}"/>\n')
 
         # Value above bar (delta percentage rounded to whole number)
         if i == 0:
@@ -158,16 +157,17 @@ def generate_svg_graph(engines, metadata, output_file):
         else:
             delta = round(pct - 100)
             label = f"{pct:.0f}%"
-        svg_parts.append(f'  <text x="{x + actual_bar_width/2}" y="{y - 5}" class="value" text-anchor="middle">{label}</text>\n')
+        svg_parts.append(f'    <text x="{x + actual_bar_width/2}" y="{y - 5}" class="value" text-anchor="middle">{label}</text>\n')
 
         # Allocator name below
         text_y = margin_top + chart_height + 20
         allocator_name = engine['allocator']
-        svg_parts.append(f'  <text x="{x + actual_bar_width/2}" y="{text_y}" class="label" text-anchor="middle">{allocator_name}</text>\n')
+        svg_parts.append(f'    <text x="{x + actual_bar_width/2}" y="{text_y}" class="label" text-anchor="middle">{allocator_name}</text>\n')
 
     # Metadata below the graph
     metadata_y = margin_top + chart_height + 50
     metadata_lines = []
+
     metadata_lines.append("Source: https://github.com/zooko/rebar")
     if metadata.get('commit'):
         metadata_lines.append(f"Commit: {metadata['commit'][:12]}")
@@ -180,7 +180,7 @@ def generate_svg_graph(engines, metadata, output_file):
 
     for i, line in enumerate(metadata_lines):
         y = metadata_y + i * 15
-        svg_parts.append(f'  <text x="{width/2}" y="{y}" class="metadata" text-anchor="middle">{line}</text>\n')
+        svg_parts.append(f'    <text x="{width/2}" y="{y}" class="metadata" text-anchor="middle">{line}</text>\n')
 
     svg_parts.append('</svg>')
 
@@ -209,7 +209,7 @@ percentages = [(g / baseline_geo_mean * 100) for g in geo_means]
 max_name_len = max(len(e['name']) for e in engines)
 max_alloc_len = max(len(e['allocator']) for e in engines)
 
-print(f"{'Allocator':<{max_alloc_len}}  {'Engine':<{max_name_len}}  {'Geo Mean':>10}  {'Relative':>10}")
+print(f"{'Allocator':<{max_alloc_len}} {'Engine':<{max_name_len}} {'Geo Mean':>10} {'Relative':>10}")
 print("-" * (max_alloc_len + max_name_len + 26))
 
 for i, engine in enumerate(engines):
@@ -219,7 +219,7 @@ for i, engine in enumerate(engines):
         delta = round(percentages[i] - 100)
         relative = f"{delta:+d}%"
 
-    print(f"{engine['allocator']:<{max_alloc_len}}  {engine['name']:<{max_name_len}}  {engine['geo_mean']:>10.2f}  {relative:>10}")
+    print(f"{engine['allocator']:<{max_alloc_len}} {engine['name']:<{max_name_len}} {engine['geo_mean']:>10.2f} {relative:>10}")
 
 # Generate graph if requested
 if args.graph:
