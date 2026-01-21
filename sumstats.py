@@ -9,6 +9,10 @@ from collections import defaultdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('csv_file', help='CSV file from rebar measure output')
+parser.add_argument('--commit', help='Git commit hash')
+parser.add_argument('--git-status', help='Git status (Clean or Uncommitted changes)')
+parser.add_argument('--cpu', help='CPU type')
+parser.add_argument('--os', help='OS type')
 parser.add_argument('--graph', help='Output SVG graph to this file')
 args = parser.parse_args()
 
@@ -66,7 +70,7 @@ def sort_allocators(allocators):
 
     return sorted(allocators, key=sort_key)
 
-def generate_svg_graph(allocator_stats, sorted_allocators, output_file):
+def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file):
     """Generate an SVG bar chart comparing allocator performance."""
 
     # Graph dimensions
@@ -157,10 +161,17 @@ def generate_svg_graph(allocator_stats, sorted_allocators, output_file):
 
     # Metadata below the graph
     metadata_y = margin_top + chart_height + 50
-    metadata_lines = [
-        "Source: https://github.com/zooko/rebar",
-        f"Based on {sum(allocator_stats[a]['test_count'] for a in sorted_allocators if a != 'default') // (len(sorted_allocators) - 1)} curated benchmarks"
-    ]
+    metadata_lines = []
+
+    metadata_lines.append("Source: https://github.com/zooko/rebar")
+    if metadata.get('commit'):
+        metadata_lines.append(f"Commit: {metadata['commit'][:12]}")
+    if metadata.get('git_status'):
+        metadata_lines.append(f"Git status: {metadata['git_status']}")
+    if metadata.get('cpu'):
+        metadata_lines.append(f"CPU: {metadata['cpu']}")
+    if metadata.get('os'):
+        metadata_lines.append(f"OS: {metadata['os']}")
 
     for i, line in enumerate(metadata_lines):
         y = metadata_y + i * 15
@@ -256,4 +267,10 @@ print("- Lower ratios/deltas are better (less overhead)")
 
 # Generate graph if requested
 if args.graph:
-    generate_svg_graph(allocator_stats, sorted_allocators, args.graph)
+    metadata = {
+        'commit': args.commit,
+        'git_status': args.git_status,
+        'cpu': args.cpu,
+        'os': args.os
+    }
+    generate_svg_graph(allocator_stats, sorted_allocators, metadata, args.graph)

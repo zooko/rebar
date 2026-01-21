@@ -1,21 +1,30 @@
 #!/bin/bash
 
+BNAME="rebar"
+
+# Collect metadata
+GITCOMMIT=$(git log -1 | head -1 | cut -d' ' -f2)
+GITCLEANSTATUS=$([ -z \"$(git status --porcelain)\" ] && echo "Clean" || echo "Uncommitted changes")
+TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 # CPU type on linuxy
 CPUTYPE=`grep "model name" /proc/cpuinfo 2>/dev/null | uniq | cut -d':' -f2-`
-
 if [ "x${CPUTYPE}" = "x" ] ; then
     # CPU type on macos
     CPUTYPE=`sysctl -n machdep.cpu.brand_string 2>/dev/null`
 fi
-
 CPUTYPE="${CPUTYPE//[^[:alnum:]]/}"
-
 OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
-
 ARGS=$*
 ARGSSTR="${ARGS//[^[:alnum:]]/}"
+FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
+RESF="tmp/${FNAME}"
+GRAPHF="tmp/${BNAME}.graph.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.svg"
 
-BNAME="rebar"
+echo "# Saving result into \"${RESF}\""
+echo "# Saving graph into \"${GRAPHF}\""
+rm -f $RESF $GRAPHF
+mkdir -p tmp
+
 FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
 RESF="tmp/${FNAME}"
 
@@ -23,21 +32,6 @@ echo "# Saving result into \"${RESF}\""
 
 rm -f $RESF
 mkdir -p tmp
-
-echo "# git log -1 | head -1" 2>&1 | tee -a $RESF
-git log -1 | head -1 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
-echo "( [ -z \"$(git status --porcelain)\" ] && echo \"Clean\" || echo \"Uncommitted changes\" )" 2>&1 | tee -a $RESF
-( [ -z "$(git status --porcelain)" ] && echo "Clean" || echo "Uncommitted changes" ) 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
-
-echo CPU type: 2>&1 | tee -a $RESF
-echo $CPUTYPE 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
-
-echo OS type: 2>&1 | tee -a $RESF
-echo $OSTYPE 2>&1 | tee -a $RESF
-echo 2>&1 | tee -a $RESF
 
 if [ "x${OSTYPE}" = "xmsys" ]; then
     # no jemalloc on windows
@@ -53,9 +47,15 @@ cargo build --locked --release
 ./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -f curated ${ARGS} | tee tmp/res.csv
 ./target/release/rebar rank $CSVFILE 2>&1 | tee -a $RESF
 
-# Generate graph - note: no metadata args needed!
-GRAPHF="${RESF%.txt}.svg"
-./critcmp.py "$CSVFILE" --graph "$GRAPHF"
+# Generate comparison with metadata passed as arguments
+./sumstats.py "$CSVFILE" --graph "%GRAPHF" \
+    --commit "$GITCOMMIT" \
+    --git-status "$GITCLEANSTATUS" \
+    --cpu "$CPUTYPE" \
+    --os "$OSTYPE" \
+    --graph "$GRAPHF" \
+    2>&1 | tee -a $RESF
+
 
 echo "# Results are in \"${RESF}\" ."
 echo "# Graph is in \"${GRAPHF}\" ."
