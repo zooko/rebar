@@ -4,7 +4,7 @@ BNAME="rebar"
 
 # Collect metadata
 GITCOMMIT=$(git log -1 | head -1 | cut -d' ' -f2)
-GITCLEANSTATUS=$([ -z \"$(git status --porcelain)\" ] && echo "Clean" || echo "Uncommitted changes")
+GITCLEANSTATUS=$( [ -z "$( git status --porcelain )" ] && echo \"Clean\" || echo \"Uncommitted changes\" )
 TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 # CPU type on linuxy
 CPUTYPE=`grep "model name" /proc/cpuinfo 2>/dev/null | uniq | cut -d':' -f2-`
@@ -28,16 +28,14 @@ mkdir -p tmp
 FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
 RESF="tmp/${FNAME}"
 
-echo "# Saving result into \"${RESF}\""
-
 rm -f $RESF
 mkdir -p tmp
 
 if [ "x${OSTYPE}" = "xmsys" ]; then
-    # no jemalloc on windows
-    ALLOCATORS="(mi|rp|sn|s)malloc"
+    # no jemalloc or snmalloc on windows
+    ALLOCATORS="(mi|rp|s)malloc"
 else
-    ALLOCATORS="(je|mi|rp|sn|s)malloc"
+    ALLOCATORS="(je|sn|mi|rp|s)malloc"
 fi
 
 CSVFILE=tmp/res.csv
@@ -52,7 +50,7 @@ cargo build --locked --release
     --commit "$GITCOMMIT" \
     --git-status "$GITCLEANSTATUS" \
     --cpu "$CPUTYPE" \
-    --os "$OSTYPE" \
+    --os "$OSTYPESTR" \
     --graph "$GRAPHF" \
     2>&1 | tee -a $RESF
 
