@@ -12,20 +12,20 @@ if [ "x${CPUTYPE}" = "x" ] ; then
     # CPU type on macos
     CPUTYPE=`sysctl -n machdep.cpu.brand_string 2>/dev/null`
 fi
-CPUTYPE="${CPUTYPE//[^[:alnum:]]/}"
+CPUTYPESTR="${CPUTYPE//[^[:alnum:]]/}"
 OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
 ARGS=$*
 ARGSSTR="${ARGS//[^[:alnum:]]/}"
-FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
+CPUSTR_DOT_OSSTR="${CPUTYPESTR}.${OSTYPESTR}"
+FNAME="${BNAME}.result.${CPUSTR_DOT_OSSTR}.txt"
 RESF="tmp/${FNAME}"
-GRAPHF="tmp/${BNAME}.graph.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.svg"
+GRAPHF="tmp/${BNAME}.graph.${CPUSTR_DOT_OSSTR}.svg"
 
 echo "# Saving result into \"${RESF}\""
 echo "# Saving graph into \"${GRAPHF}\""
 rm -f $RESF $GRAPHF
 mkdir -p tmp
 
-FNAME="${BNAME}.result.${CPUTYPE}.${OSTYPESTR}.${ARGSSTR}.txt"
 RESF="tmp/${FNAME}"
 
 rm -f $RESF

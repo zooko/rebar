@@ -103,8 +103,18 @@ def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file
     padding = bar_width * 0.2
     actual_bar_width = bar_width - padding
 
-    # Color scheme
-    colors = ['#4285f4', '#ea4335', '#fbbc04', '#34a853', '#9333ea', '#ff6b9d', '#00bcd4']
+    # Colors for each allocator
+    ALLOCATOR_COLORS = {
+        'default': '#ab47bc',       # purple
+        'glibc': '#5c6bc0',         # indigo
+        'jemalloc': '#42a5f5',      # blue
+        'snmalloc': '#26a69a',      # teal
+        'mimalloc': '#ffca28',      # amber
+        'rpmalloc': '#ff7043',      # deep orange
+        'smalloc': '#66bb6a',       # green
+        'smalloc + ffi': '#a5d6a7', # light green
+    }
+    UNKNOWN_ALLOCATOR_COLOR = '#fbbc04' # yellow
 
     svg_parts = []
     svg_parts.append(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}">
@@ -120,7 +130,7 @@ def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file
 ''')
 
     # Title
-    svg_parts.append(f'  <text x="{width/2}" y="30" class="title" text-anchor="middle">rust/regex Performance with Different Allocators (lower is better)</text>\n')
+    svg_parts.append(f'  <text x="{width/2}" y="30" class="title" text-anchor="middle">Performance of rust/regex with different allocators—time (lower is better)</text>\n')
 
     # Y-axis
     svg_parts.append(f'  <line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + chart_height}" class="axis"/>\n')
@@ -141,7 +151,7 @@ def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file
         bar_height = (pct / scale_max) * chart_height
         y = margin_top + chart_height - bar_height
 
-        color = colors[i % len(colors)]
+        color = ALLOCATOR_COLORS.get(allocator, UNKNOWN_ALLOCATOR_COLOR)
 
         # Bar
         svg_parts.append(f'  <rect x="{x}" y="{y}" width="{actual_bar_width}" height="{bar_height}" class="bar" fill="{color}"/>\n')
@@ -159,23 +169,26 @@ def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file
         text_y = margin_top + chart_height + 20
         svg_parts.append(f'  <text x="{x + actual_bar_width/2}" y="{text_y}" class="label" text-anchor="middle">{allocator}</text>\n')
 
-    # Metadata below the graph
     metadata_y = margin_top + chart_height + 50
-    metadata_lines = []
 
-    metadata_lines.append("Source: https://github.com/zooko/rebar")
+    line1_parts = []
+    line1_parts.append("Source: https://github.com/zooko/rebar")
     if metadata.get('commit'):
-        metadata_lines.append(f"Commit: {metadata['commit'][:12]}")
+        line1_parts.append(f"Commit: {metadata['commit'][:12]}")
     if metadata.get('git_status'):
-        metadata_lines.append(f"Git status: {metadata['git_status']}")
-    if metadata.get('cpu'):
-        metadata_lines.append(f"CPU: {metadata['cpu']}")
-    if metadata.get('os'):
-        metadata_lines.append(f"OS: {metadata['os']}")
+        line1_parts.append(f"Git status: {metadata['git_status']}")
 
-    for i, line in enumerate(metadata_lines):
-        y = metadata_y + i * 15
-        svg_parts.append(f'  <text x="{width/2}" y="{y}" class="metadata" text-anchor="middle">{line}</text>\n')
+    line2_parts = []
+    assert metadata.get('cpu'), metadata
+    if metadata.get('cpu'):
+        line2_parts.append(f"CPU: {metadata['cpu']}")
+    if metadata.get('os'):
+        line2_parts.append(f"OS: {metadata['os']}")
+
+    if line1_parts:
+        svg_parts.append(f'  <text x="{width/2}" y="{metadata_y}" class="metadata" text-anchor="middle">{" · ".join(line1_parts)}</text>\n')
+    if line2_parts:
+        svg_parts.append(f'  <text x="{width/2}" y="{metadata_y + 14}" class="metadata" text-anchor="middle">{" · ".join(line2_parts)}</text>\n')
 
     svg_parts.append('</svg>')
 
