@@ -3,7 +3,7 @@
 BNAME="rebar"
 
 # Collect metadata
-GITCOMMIT=$(git log -1 | head -1 | cut -d' ' -f2)
+GITCOMMIT="$(git log -1 | head -1 | cut -d' ' -f2)"
 GITCLEANSTATUS=$( [ -z "$( git status --porcelain )" ] && echo \"Clean\" || echo \"Uncommitted changes\" )
 TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 # CPU type on linuxy
