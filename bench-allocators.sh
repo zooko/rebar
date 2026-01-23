@@ -22,6 +22,8 @@ OUTPUT_DIR="${OUTPUT_DIR:-./benchmark-results}/${CPUSTR_DOT_OSSTR}"
 RESF="${OUTPUT_DIR}/${BNAME}.result.txt"
 GRAPHF="${OUTPUT_DIR}/${BNAME}.graph.svg"
 
+mkdir -p ${OUTPUT_DIR}
+
 echo "# Saving result into \"${RESF}\""
 echo "# Saving graph into \"${GRAPHF}\""
 rm -f $RESF $GRAPHF
