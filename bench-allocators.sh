@@ -1,17 +1,19 @@
 #!/bin/bash
 
+set -e
+
 BNAME="rebar"
 
 # Collect metadata
-GITCOMMIT="$(git log -1 | head -1 | cut -d' ' -f2)"
+GITCOMMIT=$(git rev-parse HEAD)
 GITCLEANSTATUS=$( [ -z "$( git status --porcelain )" ] && echo \"Clean\" || echo \"Uncommitted changes\" )
 TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
 
 # CPU type on linuxy
-CPUTYPE=`grep "model name" /proc/cpuinfo 2>/dev/null | uniq | cut -d':' -f2-`
-if [ "x${CPUTYPE}" = "x" ] ; then
+CPUTYPE=$(grep -m1 "model name" /proc/cpuinfo 2>/dev/null | cut -d':' -f2-)
+if [ -z "${CPUTYPE}" ] ; then
     # CPU type on macos
-    CPUTYPE=`sysctl -n machdep.cpu.brand_string 2>/dev/null`
+    CPUTYPE=$(sysctl -n machdep.cpu.brand_string 2>/dev/null || echo "Unknown")
 fi
 CPUTYPESTR="${CPUTYPE//[^[:alnum:]]/}"
 OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
@@ -23,11 +25,13 @@ RESF="${OUTPUT_DIR}/${BNAME}.result.txt"
 GRAPHF="${OUTPUT_DIR}/${BNAME}.graph.svg"
 
 mkdir -p ${OUTPUT_DIR}
-
-echo "# Saving result into \"${RESF}\""
-echo "# Saving graph into \"${GRAPHF}\""
 rm -f $RESF $GRAPHF
 mkdir -p tmp
+
+echo "GITCOMMIT: ${GITCOMMIT}" 2>&1 | tee -a $RESF
+echo "GITCLEANSTATUS: ${GITCLEANSTATUS}" 2>&1 | tee -a $RESF
+echo "CPUTYPE: ${CPUTYPE}" 2>&1 | tee -a $RESF
+echo "OSTYPE: ${OSTYPE}" 2>&1 | tee -a $RESF
 
 if [ "x${OSTYPE}" = "xmsys" ]; then
     # no jemalloc or snmalloc on windows
@@ -53,5 +57,5 @@ cargo build --locked --release
     2>&1 | tee -a $RESF
 
 
-echo "# Results are in \"${RESF}\" ."
+echo "# Data results (text) are in \"${RESF}\" ."
 echo "# Graph is in \"${GRAPHF}\" ."
