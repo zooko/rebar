@@ -32,8 +32,8 @@ RESF="${OUTPUT_DIR}/${BNAME}.result.txt"
 GRAPHF="${OUTPUT_DIR}/${BNAME}.graph.svg"
 
 mkdir -p ${OUTPUT_DIR}
-rm -f $RESF $GRAPHF
 mkdir -p tmp
+rm -f $RESF $GRAPHF
 
 echo "GITCOMMIT: ${GITCOMMIT}" 2>&1 | tee -a $RESF
 echo "GITCLEANSTATUS: ${GITCLEANSTATUS}" 2>&1 | tee -a $RESF
@@ -71,6 +71,9 @@ echo "========================================" | tee -a $RESF
     --os "$OSTYPESTR" \
     --graph "$GRAPHF" \
     2>&1 | tee -a $RESF
+
+echo | tee -a $RESF
+cat $CSVFILE >> $RESF
 
 echo "# Compile-only results are in \"${RESF}\" ."
 echo "# Compile-only graph is in \"${GRAPHF}\" ."
