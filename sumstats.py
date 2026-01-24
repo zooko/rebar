@@ -4,20 +4,16 @@
 import sys
 import csv
 import argparse
-import matplotlib
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.font_manager as fm
 from collections import defaultdict
 
 # Allocator colors
 ALLOCATOR_COLORS = {
     'default': '#78909c',   # blue-grey (distinct from smalloc green)
-    'glibc': '#5c6bc0',      # indigo
-    'jemalloc': '#66bb6a',    # green
-    'snmalloc': '#ab47bc',    # purple
-    'mimalloc': '#ffca28',   # amber
-    'rpmalloc': '#ff7043',   # deep orange
+    'glibc': '#5c6bc0',     # indigo
+    'jemalloc': '#66bb6a',  # green
+    'snmalloc': '#ab47bc',  # purple
+    'mimalloc': '#ffca28',  # amber
+    'rpmalloc': '#ff7043',  # deep orange
     'smalloc': '#42a5f5',   # blue
 }
 UNKNOWN_ALLOCATOR_COLOR = '#9e9e9e'  # gray
@@ -48,7 +44,6 @@ def parse_time(time_str):
         unit = parts[1]
     else:
         # No space - extract numeric part and unit part
-        # Find where digits/decimal end and unit begins
         i = 0
         while i < len(time_str) and (time_str[i].isdigit() or time_str[i] == '.'):
             i += 1
@@ -111,30 +106,48 @@ def format_pct_diff(ratio):
 def get_allocator_name(engine):
     """Extract allocator name from engine string like 'rust/regex-smalloc'."""
     engine = engine.strip()
+
     # Handle format: rust/regex-allocator or rust/regex
     if engine == 'rust/regex':
         engine = 'default'
         return engine
+
     if '-' in engine:
         # rust/regex-smalloc -> smalloc
         engine = engine.split('-')[-1]
         return engine
+
     return engine
 
+def escape_xml(text):
+    """Escape special XML characters."""
+    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+
+def rounded_rect_path(x, y, width, height, radius):
+    """Generate SVG path for rectangle with only top corners rounded."""
+    # Ensure radius doesn't exceed half the width or height
+    r = min(radius, width / 2, height / 2)
+
+    # Start at bottom-left, go clockwise
+    # Bottom-left corner (sharp)
+    path = f"M {x} {y + height}"
+    # Bottom edge to bottom-right (sharp corner)
+    path += f" L {x + width} {y + height}"
+    # Right edge up to where top-right curve starts
+    path += f" L {x + width} {y + r}"
+    # Top-right rounded corner (arc)
+    path += f" A {r} {r} 0 0 0 {x + width - r} {y}"
+    # Top edge to where top-left curve starts
+    path += f" L {x + r} {y}"
+    # Top-left rounded corner (arc)
+    path += f" A {r} {r} 0 0 0 {x} {y + r}"
+    # Left edge back to start
+    path += f" Z"
+
+    return path
+
 def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, output_file, title_suffix=''):
-    """Generate bar chart comparing allocator performance."""
-    # Try to use Arial/Helvetica for a cleaner look
-    try:
-        available_fonts = [f.name for f in fm.fontManager.ttflist]
-        if 'Arial' in available_fonts:
-            plt.rcParams['font.family'] = 'Arial'
-        elif 'Helvetica' in available_fonts:
-            plt.rcParams['font.family'] = 'Helvetica'
-        else:
-            plt.rcParams['font.family'] = 'sans-serif'
-            plt.rcParams['font.sans-serif'] = ['Arial', 'Helvetica', 'DejaVu Sans']
-    except:
-        plt.rcParams['font.family'] = 'sans-serif'
+    """Generate SVG bar chart comparing allocator performance."""
 
     # Calculate percentages (baseline = 100%)
     baseline_ratio = arith_mean_ratios.get('default', 1.0)
@@ -144,72 +157,46 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
     baseline_time_ns = normalized_sums.get('default', 0)
     baseline_time_str = format_time(baseline_time_ns)
 
-    # Create figure
-    fig, ax = plt.subplots(figsize=(10, 5))
-    plt.subplots_adjust(bottom=0.22, top=0.88, left=0.08, right=0.97)
+    # SVG dimensions and layout
+    svg_width = 800
+    svg_height = 450
+    margin_left = 80
+    margin_right = 40
+    margin_top = 60
+    margin_bottom = 100
 
-    # Bar properties
+    chart_width = svg_width - margin_left - margin_right
+    chart_height = svg_height - margin_top - margin_bottom
+
     n_allocators = len(allocators)
-    bar_width = 0.75
+    bar_spacing = chart_width / n_allocators
+    bar_width = bar_spacing * 0.7
+    corner_radius = 8
 
-    # Create bars
-    bars = []
-    for i, (allocator, pct) in enumerate(zip(allocators, percentages)):
-        color = get_color(allocator)
-        bar = ax.bar(i, pct, bar_width, color=color, edgecolor='none')
-        bars.append(bar[0])
-
-    # Set y-axis
+    # Y-axis scale
     max_pct = max(percentages)
-    ax.set_ylim(0, max(max_pct * 1.15, 115))
-    ax.set_ylabel(f'Time vs Baseline (%, baseline = {baseline_time_str})', fontsize=11, color='#999999')
+    y_max = max(max_pct * 1.15, 115)
 
-    # Style y-axis
-    ax.yaxis.set_tick_params(colors='#999999')
-    for label in ax.get_yticklabels():
-        label.set_color('#999999')
-    ax.spines['left'].set_color('#999999')
+    # Build SVG
+    svg_parts = []
 
-    # X-axis labels
-    ax.set_xticks(range(n_allocators))
-    ax.set_xticklabels(allocators, fontsize=11)
+    # SVG header
+    svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_width} {svg_height}" width="{svg_width}" height="{svg_height}">')
 
-    # Grid
-    ax.yaxis.grid(True, linestyle='--', alpha=0.3, linewidth=0.5)
-    ax.set_axisbelow(True)
+    # Background
+    svg_parts.append(f'  <rect width="{svg_width}" height="{svg_height}" fill="white"/>')
 
-    # Fixed offset for labels (in points)
-    LABEL_OFFSET_ABOVE = 3
-    LABEL_OFFSET_INSIDE = 8
-
-    # Add labels: formatted time above bar, percentage diff inside bar
-    for i, (bar, allocator, pct) in enumerate(zip(bars, allocators, percentages)):
-        bar_height = bar.get_height()
-        x_pos = bar.get_x() + bar.get_width() / 2
-
-        # Formatted time above the bar
-        norm_sum = normalized_sums[allocator]
-        time_label = format_time(norm_sum)
-        ax.annotate(time_label,
-                    xy=(x_pos, bar_height),
-                    xytext=(0, LABEL_OFFSET_ABOVE),
-                    textcoords='offset points',
-                    ha='center', va='bottom',
-                    fontsize=9, fontweight='bold',
-                    color='#333333')
-
-        # Percentage diff inside the bar (near the top)
-        if allocator == 'default':
-            pct_label = "baseline"
-        else:
-            pct_label = format_pct_diff(arith_mean_ratios[allocator])
-        ax.annotate(pct_label,
-                    xy=(x_pos, bar_height),
-                    xytext=(0, -LABEL_OFFSET_INSIDE),
-                    textcoords='offset points',
-                    ha='center', va='top',
-                    fontsize=9, fontweight='bold',
-                    color='white')
+    # Styles
+    svg_parts.append('''  <style>
+    .title { font-family: Arial, Helvetica, sans-serif; font-size: 18px; font-weight: bold; fill: #333333; }
+    .axis-label { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #666666; }
+    .tick-label { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #666666; }
+    .bar-label-name { font-family: Arial, Helvetica, sans-serif; font-size: 12px; fill: #333333; }
+    .bar-label-value { font-family: monospace; font-size: 11px; fill: #555555; }
+    .bar-label-pct { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; fill: white; }
+    .metadata { font-family: monospace; font-size: 10px; fill: #666666; }
+    .grid-line { stroke: #cccccc; stroke-width: 0.5; }
+  </style>''')
 
     # Title
     base_title = "Performance of rust/regex with different allocators"
@@ -217,12 +204,62 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
         title = f"{base_title}{title_suffix}"
     else:
         title = f"{base_title}—time (lower is better)"
-    ax.set_title(title, fontsize=16, fontweight='bold', pad=15, color='#333333')
+    title_x = svg_width / 2
+    title_y = 35
+    svg_parts.append(f'  <text x="{title_x}" y="{title_y}" class="title" text-anchor="middle">{escape_xml(title)}</text>')
 
-    # Remove top and right spines
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    ax.spines['bottom'].set_color('#000000')
+    # Y-axis label (rotated)
+    y_label = f"Time vs Baseline (%, baseline = {baseline_time_str})"
+    y_label_x = 20
+    y_label_y = margin_top + chart_height / 2
+    svg_parts.append(f'  <text x="{y_label_x}" y="{y_label_y}" class="axis-label" text-anchor="middle" transform="rotate(-90 {y_label_x} {y_label_y})">{escape_xml(y_label)}</text>')
+
+    # Grid lines and Y-axis ticks
+    y_ticks = [0, 20, 40, 60, 80, 100]
+    if y_max > 100:
+        y_ticks.append(int(y_max // 20 * 20))
+
+    for tick in y_ticks:
+        if tick > y_max:
+            continue
+        y_pos = margin_top + chart_height - (tick / y_max * chart_height)
+        # Grid line
+        svg_parts.append(f'  <line x1="{margin_left}" y1="{y_pos}" x2="{margin_left + chart_width}" y2="{y_pos}" class="grid-line"/>')
+        # Tick label
+        svg_parts.append(f'  <text x="{margin_left - 10}" y="{y_pos + 4}" class="tick-label" text-anchor="end">{tick}</text>')
+
+    # Bars
+    for i, (allocator, pct) in enumerate(zip(allocators, percentages)):
+        color = get_color(allocator)
+
+        # Bar position
+        bar_x = margin_left + i * bar_spacing + (bar_spacing - bar_width) / 2
+        bar_height = (pct / y_max) * chart_height
+        bar_y = margin_top + chart_height - bar_height
+
+        # Draw bar with rounded top corners
+        path = rounded_rect_path(bar_x, bar_y, bar_width, bar_height, corner_radius)
+        svg_parts.append(f'  <path d="{path}" fill="{color}"/>')
+
+        # Allocator name below bar
+        name_x = bar_x + bar_width / 2
+        name_y = margin_top + chart_height + 20
+        svg_parts.append(f'  <text x="{name_x}" y="{name_y}" class="bar-label-name" text-anchor="middle">{escape_xml(allocator)}</text>')
+
+        # Time value above bar
+        time_label = format_time(normalized_sums[allocator])
+        value_y = bar_y - 8
+        svg_parts.append(f'  <text x="{name_x}" y="{value_y}" class="bar-label-value" text-anchor="middle">{escape_xml(time_label)}</text>')
+
+        # Percentage inside bar (near top)
+        if allocator == 'default':
+            pct_label = "baseline"
+        else:
+            pct_label = format_pct_diff(arith_mean_ratios[allocator])
+        pct_y = bar_y + 18
+        # Only show if bar is tall enough
+        if bar_height > 35:
+            svg_parts.append(f'  <text x="{name_x}" y="{pct_y}" class="bar-label-pct" text-anchor="middle">{escape_xml(pct_label)}</text>')
 
     # Metadata
     meta_parts = []
@@ -233,7 +270,7 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
     if metadata.get('commit'):
         meta_parts.append(f"Commit: {metadata['commit'][:12]}")
     if metadata.get('git_status'):
-        meta_parts.append(f'Git status: "{metadata["git_status"]}"')
+        meta_parts.append(f"Git status: {metadata['git_status']}")
 
     line2_parts = []
     if metadata.get('cpu'):
@@ -241,15 +278,22 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
     if metadata.get('os'):
         line2_parts.append(f"OS: {metadata['os']}")
 
+    meta_y = svg_height - 35
     if meta_parts:
-        fig.text(0.5, 0.08, " · ".join(meta_parts), ha='center', fontsize=10,
-                 color='#666666', family='monospace')
-    if line2_parts:
-        fig.text(0.5, 0.03, " · ".join(line2_parts), ha='center', fontsize=10,
-                 color='#666666', family='monospace')
+        meta_text = " · ".join(meta_parts)
+        svg_parts.append(f'  <text x="{svg_width / 2}" y="{meta_y}" class="metadata" text-anchor="middle">{escape_xml(meta_text)}</text>')
 
-    plt.savefig(output_file, format='svg', bbox_inches='tight', dpi=150)
-    plt.close()
+    if line2_parts:
+        line2_text = " · ".join(line2_parts)
+        svg_parts.append(f'  <text x="{svg_width / 2}" y="{meta_y + 15}" class="metadata" text-anchor="middle">{escape_xml(line2_text)}</text>')
+
+    # Close SVG
+    svg_parts.append('</svg>')
+
+    # Write to file
+    svg_content = '\n'.join(svg_parts)
+    with open(output_file, 'w', encoding='utf-8') as f:
+        f.write(svg_content)
 
     print(f"\n📊 Graph saved to: {output_file}")
 
@@ -287,21 +331,14 @@ def main():
         sys.exit(1)
 
     # Collect normalized times for each allocator
-    # For each test, compute how long it would take if run for a standardized
-    # number of iterations (the number that would complete in 1 second with default allocator)
     allocator_normalized_times = defaultdict(list)
 
     for test_name in valid_tests:
         results = test_data[test_name]
-        baseline_time = results['default']  # time for default allocator (ns)
-
-        # iterations = how many iterations would complete in 1 second with default allocator
-        # If baseline_time is in nanoseconds, then iterations = 1e9 / baseline_time
+        baseline_time = results['default']
         iterations = 1e9 / baseline_time
 
         for allocator, time_ns in results.items():
-            # How long would this allocator take for `iterations` iterations?
-            # Each iteration takes time_ns, so total = time_ns * iterations
             normalized_time = time_ns * iterations
             allocator_normalized_times[allocator].append(normalized_time)
 
