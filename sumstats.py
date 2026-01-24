@@ -15,6 +15,7 @@ ALLOCATOR_COLORS = {
     'mimalloc': '#ffca28',  # amber
     'rpmalloc': '#ff7043',  # deep orange
     'smalloc': '#42a5f5',   # blue
+    'smalloc + ffi': '#93c2f9', # light blue
 }
 UNKNOWN_ALLOCATOR_COLOR = '#9e9e9e'  # gray
 
