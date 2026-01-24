@@ -9,6 +9,8 @@ from collections import defaultdict
 
 parser = argparse.ArgumentParser()
 parser.add_argument('csv_file', help='CSV file from rebar measure output')
+parser.add_argument('--title-suffix', default='',
+                    help='Suffix to add to graph title (e.g., "—compile benchmarks only")')
 parser.add_argument('--commit', help='Git commit hash')
 parser.add_argument('--git-status', help='Git status (Clean or Uncommitted changes)')
 parser.add_argument('--cpu', help='CPU type')
@@ -67,10 +69,9 @@ def sort_allocators(allocators):
             return (1, ALLOCATOR_ORDER.index(name), name)
         else:
             return (2, 0, name)
-
     return sorted(allocators, key=sort_key)
 
-def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file):
+def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file, title_suffix):
     """Generate an SVG bar chart comparing allocator performance."""
 
     # Graph dimensions
@@ -105,16 +106,16 @@ def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file
 
     # Colors for each allocator
     ALLOCATOR_COLORS = {
-        'default': '#ab47bc',       # purple
-        'glibc': '#5c6bc0',         # indigo
-        'jemalloc': '#42a5f5',      # blue
-        'snmalloc': '#26a69a',      # teal
-        'mimalloc': '#ffca28',      # amber
-        'rpmalloc': '#ff7043',      # deep orange
-        'smalloc': '#66bb6a',       # green
-        'smalloc + ffi': '#a5d6a7', # light green
+        'default': '#ab47bc',    # purple
+        'glibc': '#5c6bc0',      # indigo
+        'jemalloc': '#42a5f5',   # blue
+        'snmalloc': '#26a69a',   # teal
+        'mimalloc': '#ffca28',   # amber
+        'rpmalloc': '#ff7043',   # deep orange
+        'smalloc': '#66bb6a',    # green
+        'smalloc + ffi': '#a5d6a7',  # light green
     }
-    UNKNOWN_ALLOCATOR_COLOR = '#fbbc04' # yellow
+    UNKNOWN_ALLOCATOR_COLOR = '#fbbc04'  # yellow
 
     svg_parts = []
     svg_parts.append(f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}">
@@ -130,7 +131,13 @@ def generate_svg_graph(allocator_stats, sorted_allocators, metadata, output_file
 ''')
 
     # Title
-    svg_parts.append(f'  <text x="{width/2}" y="30" class="title" text-anchor="middle">Performance of rust/regex with different allocators—time (lower is better)</text>\n')
+    base_title = "Performance of rust/regex with different allocators"
+    if title_suffix:
+        title = f"{base_title}{title_suffix}"
+    else:
+        title = f"{base_title}—time (lower is better)"
+
+    svg_parts.append(f'  <text x="{width/2}" y="30" class="title" text-anchor="middle">{title}</text>\n')
 
     # Y-axis
     svg_parts.append(f'  <line x1="{margin_left}" y1="{margin_top}" x2="{margin_left}" y2="{margin_top + chart_height}" class="axis"/>\n')
@@ -260,8 +267,11 @@ allocator_stats['default'] = {
 # Sort allocators
 sorted_allocators = ['default'] + sort_allocators([a for a in allocator_stats.keys() if a != 'default'])
 
+# Print summary
+print(f"\nBenchmarks included: {len(test_data)}")
+
 # Print results
-print(f"{'Allocator':<12} {'Geo Mean Ratio':>16} {'Geo Mean Delta':>16} {'Test Count':>12}")
+print(f"\n{'Allocator':<12} {'Geo Mean Ratio':>16} {'Geo Mean Delta':>16} {'Test Count':>12}")
 print("-" * 60)
 
 for allocator in sorted_allocators:
@@ -286,4 +296,4 @@ if args.graph:
         'cpu': args.cpu,
         'os': args.os
     }
-    generate_svg_graph(allocator_stats, sorted_allocators, metadata, args.graph)
+    generate_svg_graph(allocator_stats, sorted_allocators, metadata, args.graph, args.title_suffix)
