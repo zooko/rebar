@@ -180,6 +180,7 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
 
     # Build SVG
     svg_parts = []
+    svg_parts.append('<?xml version="1.0" encoding="UTF-8"?>')
 
     # SVG header
     svg_parts.append(f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {svg_width} {svg_height}" width="{svg_width}" height="{svg_height}">')
@@ -296,7 +297,7 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(svg_content)
 
-    print(f"\n📊 Graph saved to: {output_file}")
+    print(f"\nGraph saved to: {output_file}")
 
 def main():
     parser = argparse.ArgumentParser(description='Analyze rebar benchmark results and generate comparison graphs')
