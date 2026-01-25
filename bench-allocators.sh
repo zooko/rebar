@@ -22,6 +22,8 @@ CPUTYPE=${CPUTYPE## }  # Trim leading space
 CPUTYPESTR="${CPUTYPE//[^[:alnum:]]/}"
 OSTYPESTR="${OSTYPE//[^[:alnum:]]/}"
 
+CPUCOUNT=$(nproc 2>/dev/null || sysctl -n hw.logicalcpu 2>/dev/null || echo "${NUMBER_OF_PROCESSORS:-unknown}")
+
 ARGS=$*
 
 CPUSTR_DOT_OSSTR="${CPUTYPESTR}.${OSTYPESTR}"
@@ -39,6 +41,7 @@ echo "GITCOMMIT: ${GITCOMMIT}" 2>&1 | tee -a $RESF
 echo "GITCLEANSTATUS: ${GITCLEANSTATUS}" 2>&1 | tee -a $RESF
 echo "CPUTYPE: ${CPUTYPE}" 2>&1 | tee -a $RESF
 echo "OSTYPE: ${OSTYPE}" 2>&1 | tee -a $RESF
+echo "CPUCOUNT: ${CPUCOUNT}" 2>&1 | tee -a $RESF
 
 if [ "x${OSTYPE}" = "xmsys" ]; then
     # no jemalloc or snmalloc on windows
@@ -69,6 +72,7 @@ echo "========================================" | tee -a $RESF
     --git-status "$GITCLEANSTATUS" \
     --cpu "$CPUTYPE" \
     --os "$OSTYPESTR" \
+    --cpucount "$CPUCOUNT" \
     --graph "$GRAPHF" \
     2>&1 | tee -a $RESF
 

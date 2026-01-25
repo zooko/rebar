@@ -279,6 +279,8 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
         line2_parts.append(f"CPU: {metadata['cpu']}")
     if metadata.get('os'):
         line2_parts.append(f"OS: {metadata['os']}")
+    if metadata.get('cpucount'):
+        line2_parts.append(f"CPU Count: {metadata['cpucount']}")
 
     meta_y = svg_height - 35
     if meta_parts:
@@ -308,6 +310,7 @@ def main():
     parser.add_argument('--git-status', help='Git status (Clean or Uncommitted changes)')
     parser.add_argument('--cpu', help='CPU type')
     parser.add_argument('--os', help='OS type')
+    parser.add_argument('--cpucount', help='Number of CPUs')
     parser.add_argument('--source', help='Source URL')
 
     args = parser.parse_args()
@@ -377,6 +380,7 @@ def main():
             'git_status': args.git_status,
             'cpu': args.cpu,
             'os': args.os,
+            'cpucount': args.cpucount,
             'source': args.source
         }
         generate_graph(sorted_allocators, arith_mean_ratios, normalized_sums, metadata, args.graph, args.title_suffix)
