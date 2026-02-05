@@ -264,54 +264,56 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
             svg_parts.append(f'  <text x="{name_x}" y="{pct_y}" class="bar-label-pct" text-anchor="middle">{escape_xml(pct_label)}</text>')
 
     # Metadata
+    meta_y = svg_height - 50
+
     meta_parts = []
-    if metadata.get('source'):
-        meta_parts.append(f"Source: {metadata['source']}")
-    elif metadata.get('commit'):
-        meta_parts.append("Source: https://github.com/zooko/rebar")
-    if metadata.get('commit'):
-        meta_parts.append(f"Commit: {metadata['commit'][:12]}")
-    if metadata.get('git_status'):
-        meta_parts.append(f"Git status: {metadata['git_status']}")
+    if metadata.get('timestamp'):
+        meta_parts.append(f"Timestamp: {metadata['timestamp']}")
+
+    if meta_parts:
+        svg_parts.append(f'  <text x="{svg_width/2}" y="{meta_y}" class="metadata" text-anchor="middle">{escape_xml(" · ".join(meta_parts))}</text>\n')
 
     line2_parts = []
-    if metadata.get('cpu'):
-        line2_parts.append(f"CPU: {metadata['cpu']}")
-    if metadata.get('os'):
-        line2_parts.append(f"OS: {metadata['os']}")
-    if metadata.get('cpucount'):
-        line2_parts.append(f"CPU Count: {metadata['cpucount']}")
-
-    meta_y = svg_height - 35
-    if meta_parts:
-        meta_text = " · ".join(meta_parts)
-        svg_parts.append(f'  <text x="{svg_width / 2}" y="{meta_y}" class="metadata" text-anchor="middle">{escape_xml(meta_text)}</text>')
+    if metadata.get('source'):
+        line2_parts.append(f"Source: {metadata['source']}")
+    if metadata.get('commit'):
+        line2_parts.append(f"Commit: {metadata['commit'][:12]}")
+    if metadata.get('git_status'):
+        line2_parts.append(f"Git status: {metadata['git_status']}")
 
     if line2_parts:
-        line2_text = " · ".join(line2_parts)
-        svg_parts.append(f'  <text x="{svg_width / 2}" y="{meta_y + 15}" class="metadata" text-anchor="middle">{escape_xml(line2_text)}</text>')
+        svg_parts.append(f'  <text x="{svg_width/2}" y="{meta_y + 15}" class="metadata" text-anchor="middle">{escape_xml(" · ".join(line2_parts))}</text>\n')
 
-    # Close SVG
+    line3_parts = []
+    if metadata.get('cpu'):
+        line3_parts.append(f"CPU: {metadata['cpu']}")
+    if metadata.get('os'):
+        line3_parts.append(f"OS: {metadata['os']}")
+    if metadata.get('cpucount'):
+        line3_parts.append(f"CPU Count: {metadata['cpucount']}")
+
+    if line3_parts:
+        svg_parts.append(f'  <text x="{svg_width/2}" y="{meta_y + 30}" class="metadata" text-anchor="middle">{escape_xml(" · ".join(line3_parts))}</text>\n')
+
     svg_parts.append('</svg>')
 
-    # Write to file
-    svg_content = '\n'.join(svg_parts)
     with open(output_file, 'w', encoding='utf-8') as f:
-        f.write(svg_content)
+        f.write('\n'.join(svg_parts))
 
     print(f"\nGraph saved to: {output_file}")
 
 def main():
     parser = argparse.ArgumentParser(description='Analyze rebar benchmark results and generate comparison graphs')
     parser.add_argument('csv_file', help='CSV file from rebar measure')
-    parser.add_argument('--graph', help='Output SVG graph to this file')
-    parser.add_argument('--title-suffix', default='', help='Suffix to add to graph title')
+    parser.add_argument('--timestamp', help='When the benchmarking process started')
+    parser.add_argument('--source', help='Source URL')
     parser.add_argument('--commit', help='Git commit hash')
     parser.add_argument('--git-status', help='Git status (Clean or Uncommitted changes)')
     parser.add_argument('--cpu', help='CPU type')
     parser.add_argument('--os', help='OS type')
     parser.add_argument('--cpucount', help='Number of CPUs')
-    parser.add_argument('--source', help='Source URL')
+    parser.add_argument('--graph', help='Output SVG graph to this file')
+    parser.add_argument('--title-suffix', default='', help='Suffix to add to graph title')
 
     args = parser.parse_args()
 
