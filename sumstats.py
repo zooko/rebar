@@ -378,6 +378,7 @@ def main():
     # Generate graph if requested
     if args.graph:
         metadata = {
+            'timestamp': args.timestamp,
             'commit': args.commit,
             'git_status': args.git_status,
             'cpu': args.cpu,
