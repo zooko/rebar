@@ -6,33 +6,10 @@ import csv
 import argparse
 from collections import defaultdict
 
-# Allocator colors
-ALLOCATOR_COLORS = {
-    'default': '#78909c',   # blue-grey (distinct from smalloc green)
-    'glibc': '#5c6bc0',     # indigo
-    'jemalloc': '#66bb6a',  # green
-    'snmalloc': '#ab47bc',  # purple
-    'mimalloc': '#ffca28',  # amber
-    'rpmalloc': '#ff7043',  # deep orange
-    'smalloc': '#42a5f5',   # blue
-    'smalloc + ffi': '#93c2f9', # light blue
-}
-UNKNOWN_ALLOCATOR_COLOR = '#9e9e9e'  # gray
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-# Canonical allocator ordering
-ALLOCATOR_ORDER = ['default', 'jemalloc', 'snmalloc', 'mimalloc', 'rpmalloc', 'smalloc']
-
-def get_color(name):
-    return ALLOCATOR_COLORS.get(name, UNKNOWN_ALLOCATOR_COLOR)
-
-def sort_allocators(names):
-    """Sort allocator names in canonical order: default, known allocators, unknown, smalloc last."""
-    def sort_key(name):
-        if name in ALLOCATOR_ORDER:
-            return (0, ALLOCATOR_ORDER.index(name))
-        else:
-            return (0, ALLOCATOR_ORDER.index('smalloc') - 0.5)
-    return sorted(names, key=sort_key)
+import metadata
 
 def parse_time(time_str):
     """Convert time string like '1.23 µs' or '1.99ms' to nanoseconds."""
@@ -120,10 +97,6 @@ def get_allocator_name(engine):
 
     return engine
 
-def escape_xml(text):
-    """Escape special XML characters."""
-    return text.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-
 def rounded_rect_path(x, y, width, height, radius):
     """Generate SVG path for rectangle with only top corners rounded."""
     # Ensure radius doesn't exceed half the width or height
@@ -147,7 +120,7 @@ def rounded_rect_path(x, y, width, height, radius):
 
     return path
 
-def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, output_file, title_suffix=''):
+def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata_dict, output_file, title_suffix=''):
     """Generate SVG bar chart comparing allocator performance."""
 
     # Calculate percentages (baseline = 100%)
@@ -208,13 +181,13 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
         title = f"{base_title}—time (lower is better)"
     title_x = svg_width / 2
     title_y = 35
-    svg_parts.append(f'  <text x="{title_x}" y="{title_y}" class="title" text-anchor="middle">{escape_xml(title)}</text>')
+    svg_parts.append(f'  <text x="{title_x}" y="{title_y}" class="title" text-anchor="middle">{metadata.escape_xml(title)}</text>')
 
     # Y-axis label (rotated)
     y_label = f"Time vs Baseline (%, baseline = {baseline_time_str})"
     y_label_x = 20
     y_label_y = margin_top + chart_height / 2
-    svg_parts.append(f'  <text x="{y_label_x}" y="{y_label_y}" class="axis-label" text-anchor="middle" transform="rotate(-90 {y_label_x} {y_label_y})">{escape_xml(y_label)}</text>')
+    svg_parts.append(f'  <text x="{y_label_x}" y="{y_label_y}" class="axis-label" text-anchor="middle" transform="rotate(-90 {y_label_x} {y_label_y})">{metadata.escape_xml(y_label)}</text>')
 
     # Grid lines and Y-axis ticks
     y_ticks = [0, 20, 40, 60, 80, 100]
@@ -232,7 +205,7 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
 
     # Bars
     for i, (allocator, pct) in enumerate(zip(allocators, percentages)):
-        color = get_color(allocator)
+        color = metadata.get_color(allocator)
 
         # Bar position
         bar_x = margin_left + i * bar_spacing + (bar_spacing - bar_width) / 2
@@ -246,12 +219,12 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
         # Allocator name below bar
         name_x = bar_x + bar_width / 2
         name_y = margin_top + chart_height + 20
-        svg_parts.append(f'  <text x="{name_x}" y="{name_y}" class="bar-label-name" text-anchor="middle">{escape_xml(allocator)}</text>')
+        svg_parts.append(f'  <text x="{name_x}" y="{name_y}" class="bar-label-name" text-anchor="middle">{metadata.escape_xml(allocator)}</text>')
 
         # Time value above bar
         time_label = format_time(normalized_sums[allocator])
         value_y = bar_y - 8
-        svg_parts.append(f'  <text x="{name_x}" y="{value_y}" class="bar-label-value" text-anchor="middle">{escape_xml(time_label)}</text>')
+        svg_parts.append(f'  <text x="{name_x}" y="{value_y}" class="bar-label-value" text-anchor="middle">{metadata.escape_xml(time_label)}</text>')
 
         # Percentage inside bar (near top)
         if allocator == 'default':
@@ -261,39 +234,9 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
         pct_y = bar_y + 18
         # Only show if bar is tall enough
         if bar_height > 35:
-            svg_parts.append(f'  <text x="{name_x}" y="{pct_y}" class="bar-label-pct" text-anchor="middle">{escape_xml(pct_label)}</text>')
+            svg_parts.append(f'  <text x="{name_x}" y="{pct_y}" class="bar-label-pct" text-anchor="middle">{metadata.escape_xml(pct_label)}</text>')
 
-    # Metadata
-    meta_y = svg_height - 50
-
-    meta_parts = []
-    if metadata.get('timestamp'):
-        meta_parts.append(f"Timestamp: {metadata['timestamp']}")
-
-    if meta_parts:
-        svg_parts.append(f'  <text x="{svg_width/2}" y="{meta_y}" class="metadata" text-anchor="middle">{escape_xml(" · ".join(meta_parts))}</text>\n')
-
-    line2_parts = []
-    if metadata.get('source'):
-        line2_parts.append(f"Source: {metadata['source']}")
-    if metadata.get('commit'):
-        line2_parts.append(f"Commit: {metadata['commit'][:12]}")
-    if metadata.get('git_status'):
-        line2_parts.append(f"Git status: {metadata['git_status']}")
-
-    if line2_parts:
-        svg_parts.append(f'  <text x="{svg_width/2}" y="{meta_y + 15}" class="metadata" text-anchor="middle">{escape_xml(" · ".join(line2_parts))}</text>\n')
-
-    line3_parts = []
-    if metadata.get('cpu'):
-        line3_parts.append(f"CPU: {metadata['cpu']}")
-    if metadata.get('os'):
-        line3_parts.append(f"OS: {metadata['os']}")
-    if metadata.get('cpucount'):
-        line3_parts.append(f"CPU Count: {metadata['cpucount']}")
-
-    if line3_parts:
-        svg_parts.append(f'  <text x="{svg_width/2}" y="{meta_y + 30}" class="metadata" text-anchor="middle">{escape_xml(" · ".join(line3_parts))}</text>\n')
+    metadata.add_svg_metadata(metadata_dict, svg_height - 50, svg_parts, svg_width)
 
     svg_parts.append('</svg>')
 
@@ -305,14 +248,9 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata, out
 def main():
     parser = argparse.ArgumentParser(description='Analyze rebar benchmark results and generate comparison graphs')
     parser.add_argument('csv_file', help='CSV file from rebar measure')
-    parser.add_argument('--timestamp', help='When the benchmarking process started')
-    parser.add_argument('--source', help='Source URL')
-    parser.add_argument('--commit', help='Git commit hash')
-    parser.add_argument('--git-status', help='Git status (Clean or Uncommitted changes)')
-    parser.add_argument('--cpu', help='CPU type')
-    parser.add_argument('--os', help='OS type')
-    parser.add_argument('--cpucount', help='Number of CPUs')
-    parser.add_argument('--graph', help='Output SVG graph to this file')
+
+    metadata.add_parse_args(parser)
+
     parser.add_argument('--title-suffix', default='', help='Suffix to add to graph title')
 
     args = parser.parse_args()
@@ -361,7 +299,7 @@ def main():
         arith_mean_ratios[allocator] = normalized_sums[allocator] / baseline_sum
 
     # Sort allocators in canonical order
-    sorted_allocators = sort_allocators(list(arith_mean_ratios.keys()))
+    sorted_allocators = metadata.sort_allocators(list(arith_mean_ratios.keys()))
 
     # Print summary
     print(f"\nBenchmarks analyzed: {len(valid_tests)}")
@@ -377,16 +315,7 @@ def main():
 
     # Generate graph if requested
     if args.graph:
-        metadata = {
-            'timestamp': args.timestamp,
-            'commit': args.commit,
-            'git_status': args.git_status,
-            'cpu': args.cpu,
-            'os': args.os,
-            'cpucount': args.cpucount,
-            'source': args.source
-        }
-        generate_graph(sorted_allocators, arith_mean_ratios, normalized_sums, metadata, args.graph, args.title_suffix)
+        generate_graph(sorted_allocators, arith_mean_ratios, normalized_sums, args, args.graph, args.title_suffix)
 
 if __name__ == '__main__':
     main()
