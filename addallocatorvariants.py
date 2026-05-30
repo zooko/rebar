@@ -2,7 +2,7 @@
 """
 Add regex allocator variants to rebar benchmark TOML files.
 
-Usage: python add_regex_variants.py benchmarks/definitions/test/func/*.toml
+Usage: python addallocatorvariants.py benchmarks/definitions/test/func/*.toml
 """
 
 import sys

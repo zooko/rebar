@@ -1,13 +1,9 @@
 #!/bin/bash
 set -e
 
-source "$(dirname "$0")/gather-metadata.sh"
+source "$(dirname "$0")/tools.sh"
 
 BNAME="rebar"
-
-ARGS=$*
-
-OUTPUT_DIR="${OUTPUT_DIR:-./benchmark-results}/${CPUSTR_DOT_OSSTR}"
 
 # Output files
 RESF="${OUTPUT_DIR}/${BNAME}.result.txt"
@@ -21,20 +17,40 @@ echo "TIMESTAMP: ${TIMESTAMP}" 2>&1 | tee -a $RESF
 gather_and_print_git_metadata 2>&1 | tee -a $RESF
 print_machine_metadata 2>&1 | tee -a $RESF
 
-if [ "x${OSTYPE}" = "xmsys" ]; then
-    # no jemalloc or snmalloc on windows
-    ALLOCATORS="(mi|rp|s)malloc"
-else
-    ALLOCATORS="(je|sn|mi|rp|s)malloc"
-fi
+allocator_regex() {
+    local out=""
+    local a short
+
+    for a in "$@"; do
+        case "$a" in
+            jemalloc)  short="je" ;;
+            snmalloc)  short="sn" ;;
+            mimalloc)  short="mi" ;;
+            rpmalloc)  short="rp" ;;
+            smalloc)   short="s"  ;;
+            *)         short="$a" ;;
+        esac
+
+        if [ -z "$out" ]; then
+            out="$short"
+        else
+            out="$out|$short"
+        fi
+    done
+
+    printf '(%s)malloc\n' "$out"
+}
+
+ALLOCATOR_LIST+=("smalloc")
+ALLOCATOR_REGEX="$(allocator_regex "${ALLOCATOR_LIST[@]}")"
 
 CSVFILE=tmp/res.csv
 
-cargo build --locked --release
-./target/release/rebar build -e "^rust/regex(-${ALLOCATORS})?$"
+cargo "${CARGO_CONFIG_ARGS[@]}" build --offline --release 
+./target/release/rebar build -e "^rust/regex(-${ALLOCATOR_REGEX})?$" -- "${CARGO_CONFIG_ARGS[@]}"
 
 # Measure ONLY compile benchmarks by adding -m compile
-./target/release/rebar measure -e "^rust/regex(-${ALLOCATORS})?$" -m compile -f curated ${ARGS} | tee $CSVFILE
+./target/release/rebar measure -e "^rust/regex(-${ALLOCATOR_REGEX})?$" -m compile -f curated ${*} -- "${CARGO_CONFIG_ARGS[@]}" | tee $CSVFILE
 
 # Rank compile benchmarks
 echo "" | tee -a $RESF
