@@ -60,7 +60,7 @@ echo "========================================" | tee -a $RESF
 ./target/release/rebar rank $CSVFILE 2>&1 | tee -a $RESF
 
 # Generate graph for compile-only benchmarks
-./sumstats.py "$CSVFILE" --graph "$GRAPHF" --title-suffix "—compile benchmarks only" "${METADATA_ARGS_TO_PASS_TO_PYTHON_SCRIPT[@]}" 2>&1 | tee -a $RESF
+./sumstats.py "$CSVFILE" --graph "$GRAPHF" "${METADATA_ARGS_TO_PASS_TO_PYTHON_SCRIPT[@]}" --smalloc-dep-version $(get_smalloc_dep_version "engines/rust/regex-smalloc") 2>&1 | tee -a $RESF
 
 echo | tee -a $RESF
 cat $CSVFILE >> $RESF

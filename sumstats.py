@@ -120,7 +120,7 @@ def rounded_rect_path(x, y, width, height, radius):
 
     return path
 
-def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata_dict, output_file, title_suffix=''):
+def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata_dict, output_file):
     """Generate SVG bar chart comparing allocator performance."""
 
     # Calculate percentages (baseline = 100%)
@@ -174,11 +174,8 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata_dict
   </style>''')
 
     # Title
-    base_title = "Performance of rust/regex with different allocators"
-    if title_suffix:
-        title = f"{base_title}{title_suffix}"
-    else:
-        title = f"{base_title}—time (lower is better)"
+    base_title = "Performance of rust/regex compilation with different allocators"
+    title = f"{base_title}—time (lower is better)"
     title_x = svg_width / 2
     title_y = 35
     svg_parts.append(f'  <text x="{title_x}" y="{title_y}" class="title" text-anchor="middle">{metadata.escape_xml(title)}</text>')
@@ -201,7 +198,7 @@ def generate_graph(allocators, arith_mean_ratios, normalized_sums, metadata_dict
         # Grid line
         svg_parts.append(f'  <line x1="{margin_left}" y1="{y_pos}" x2="{margin_left + chart_width}" y2="{y_pos}" class="grid-line"/>')
         # Tick label
-        svg_parts.append(f'  <text x="{margin_left - 10}" y="{y_pos + 4}" class="tick-label" text-anchor="end">{tick}</text>')
+        svg_parts.append(f'  <text x="{margin_left - 10}" y="{y_pos + 4}" class="tick-label" text-anchor="end">{tick}%</text>')
 
     # Bars
     for i, (allocator, pct) in enumerate(zip(allocators, percentages)):
@@ -250,8 +247,6 @@ def main():
     parser.add_argument('csv_file', help='CSV file from rebar measure')
 
     metadata.add_parse_args(parser)
-
-    parser.add_argument('--title-suffix', default='', help='Suffix to add to graph title')
 
     args = parser.parse_args()
 
@@ -315,7 +310,7 @@ def main():
 
     # Generate graph if requested
     if args.graph:
-        generate_graph(sorted_allocators, arith_mean_ratios, normalized_sums, args, args.graph, args.title_suffix)
+        generate_graph(sorted_allocators, arith_mean_ratios, normalized_sums, args, args.graph)
 
 if __name__ == '__main__':
     main()
