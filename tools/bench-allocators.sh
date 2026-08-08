@@ -1,7 +1,11 @@
 #!/bin/bash
 set -e
 
-source "$(dirname "$0")/tools.sh"
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+REPO_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+
+cd "$REPO_ROOT"
+source "$SCRIPT_DIR/tools.sh"
 
 BNAME="rebar"
 
@@ -16,6 +20,7 @@ rm -f $RESF $GRAPHF
 echo "TIMESTAMP: ${TIMESTAMP}" 2>&1 | tee -a $RESF
 gather_and_print_git_metadata 2>&1 | tee -a $RESF
 print_machine_metadata 2>&1 | tee -a $RESF
+echo "smalloc version: $(get_smalloc_dep_version .)" 2>&1 | tee -a $RESF
 
 allocator_regex() {
     local out=""
@@ -60,7 +65,7 @@ echo "========================================" | tee -a $RESF
 ./target/release/rebar rank $CSVFILE 2>&1 | tee -a $RESF
 
 # Generate graph for compile-only benchmarks
-./sumstats.py "$CSVFILE" --graph "$GRAPHF" "${METADATA_ARGS_TO_PASS_TO_PYTHON_SCRIPT[@]}" --smalloc-dep-version $(get_smalloc_dep_version "engines/rust/regex-smalloc") 2>&1 | tee -a $RESF
+./tools/sumstats.py "$CSVFILE" --graph "$GRAPHF" "${METADATA_ARGS_TO_PASS_TO_PYTHON_SCRIPT[@]}" --smalloc-dep-version $(get_smalloc_dep_version "engines/rust/regex-smalloc") 2>&1 | tee -a $RESF
 
 echo | tee -a $RESF
 cat $CSVFILE >> $RESF
