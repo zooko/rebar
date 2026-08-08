@@ -20,7 +20,7 @@ rm -f $RESF $GRAPHF
 echo "TIMESTAMP: ${TIMESTAMP}" 2>&1 | tee -a $RESF
 gather_and_print_git_metadata 2>&1 | tee -a $RESF
 print_machine_metadata 2>&1 | tee -a $RESF
-echo "smalloc version: $(get_smalloc_dep_version .)" 2>&1 | tee -a $RESF
+echo "smalloc version: $(get_smalloc_dep_version engines/rust/regex-smalloc)" 2>&1 | tee -a $RESF
 
 allocator_regex() {
     local out=""
@@ -51,7 +51,7 @@ ALLOCATOR_REGEX="$(allocator_regex "${ALLOCATOR_LIST[@]}")"
 
 CSVFILE=tmp/res.csv
 
-cargo "${CARGO_CONFIG_ARGS[@]}" build --offline --release 
+cargo "${CARGO_CONFIG_ARGS[@]}" build --locked --offline --release 
 ./target/release/rebar build -e "^rust/regex(-${ALLOCATOR_REGEX})?$" -- "${CARGO_CONFIG_ARGS[@]}"
 
 # Measure ONLY compile benchmarks by adding -m compile
